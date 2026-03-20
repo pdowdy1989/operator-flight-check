@@ -1,0 +1,17 @@
+# ===== Root-level ignores =====
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Environment / Secrets
+.env
+*.env
+
+# Logs
+*.log
