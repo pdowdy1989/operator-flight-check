@@ -14,9 +14,19 @@ import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "spot_checks")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class SpotCheck {
 
     @Id
@@ -63,77 +73,5 @@ public class SpotCheck {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public Spot getSpot() {
-        return spot;
-    }
-
-    public void setSpot(Spot spot) {
-        this.spot = spot;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public DroneProfile getProfile() {
-        return profile;
-    }
-
-    public void setProfile(DroneProfile profile) {
-        this.profile = profile;
-    }
-
-    public LocalDate getDate() {
-        return date;
-    }
-
-    public void setDate(LocalDate date) {
-        this.date = date;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public String getSummary() {
-        return summary;
-    }
-
-    public void setSummary(String summary) {
-        this.summary = summary;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

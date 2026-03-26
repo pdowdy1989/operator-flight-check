@@ -168,6 +168,106 @@ class ApiIntegrationTests {
     }
 
     @Test
+    // Verifies the full spot-check CRUD cycle, including pageable listing, using a real JWT from auth endpoints.
+    void spotCheckCrudWorksEndToEndWithJwtAuthentication() throws Exception {
+        String token = registerAndExtractToken("check-flow@pedaerial.com");
+
+        String createdSpotId = extractJsonValue(
+            mockMvc.perform(post("/api/spots")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                        {
+                          "label": "Laguna Cliffs",
+                          "address": "Laguna Cliffs, Dana Point, CA",
+                          "lat": 33.460100,
+                          "lon": -117.700400,
+                          "notes": "Primary coastal launch site",
+                          "favorite": true
+                        }
+                        """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(),
+            "id"
+        );
+
+        String createdProfileId = extractJsonValue(
+            mockMvc.perform(post("/api/drone-profiles")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                        {
+                          "name": "DJI Air 3",
+                          "type": "Prosumer",
+                          "windGreenMph": 12,
+                          "windYellowMph": 18,
+                          "gustGreenMph": 16,
+                          "gustYellowMph": 24,
+                          "precipGreenPct": 10,
+                          "precipYellowPct": 30
+                        }
+                        """))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString(),
+            "id"
+        );
+
+        MvcResult createCheckResult = mockMvc.perform(post("/api/spot-checks")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "spotId": "%s",
+                      "profileId": "%s",
+                      "date": "2026-03-26",
+                      "status": "green",
+                      "summary": "Great launch window",
+                      "notes": "Looks good"
+                    }
+                    """.formatted(createdSpotId, createdProfileId)))
+            .andExpect(status().isCreated())
+            .andExpect(jsonPath("$.spotId").value(createdSpotId))
+            .andExpect(jsonPath("$.profileId").value(createdProfileId))
+            .andReturn();
+
+        String createdCheckId = extractJsonValue(createCheckResult.getResponse().getContentAsString(), "id");
+
+        mockMvc.perform(get("/api/spot-checks?page=0&size=10")
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.content.length()").value(1))
+            .andExpect(jsonPath("$.content[0].id").value(createdCheckId));
+
+        mockMvc.perform(put("/api/spot-checks/{id}", createdCheckId)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                      "spotId": "%s",
+                      "profileId": "%s",
+                      "date": "2026-03-27",
+                      "status": "red",
+                      "summary": "Unsafe conditions",
+                      "notes": "Do not fly"
+                    }
+                    """.formatted(createdSpotId, createdProfileId)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.status").value("RED"));
+
+        mockMvc.perform(delete("/api/spot-checks/{id}", createdCheckId)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+            .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/spot-checks/{id}", createdCheckId)
+                .header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
     // Verifies that an authenticated regular user is still forbidden from admin-only endpoints.
     void adminEndpointsRemainForbiddenForAuthenticatedNonAdmins() throws Exception {
         String token = registerAndExtractToken("regular-user@pedaerial.com");

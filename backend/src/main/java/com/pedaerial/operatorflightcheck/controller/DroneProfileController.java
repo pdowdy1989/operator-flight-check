@@ -3,6 +3,8 @@ package com.pedaerial.operatorflightcheck.controller;
 import com.pedaerial.operatorflightcheck.dto.DroneProfileRequest;
 import com.pedaerial.operatorflightcheck.dto.DroneProfileResponse;
 import com.pedaerial.operatorflightcheck.service.DroneProfileService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/drone-profiles")
+@Tag(name = "Drone Profiles", description = "Create and manage aircraft threshold profiles.")
 public class DroneProfileController {
 
     private final DroneProfileService droneProfileService;
@@ -28,11 +31,13 @@ public class DroneProfileController {
     }
 
     @GetMapping
+    @Operation(summary = "List drone profiles", description = "Returns all drone profiles owned by the authenticated user.")
     public List<DroneProfileResponse> listProfiles(@RequestHeader("X-User-Id") String userId) {
         return droneProfileService.getProfilesForUser(userId);
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get a drone profile", description = "Returns a single drone profile owned by the authenticated user.")
     public DroneProfileResponse getProfile(
         @RequestHeader("X-User-Id") String userId,
         @PathVariable String id
@@ -41,6 +46,7 @@ public class DroneProfileController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a drone profile", description = "Creates a new drone threshold profile.")
     public ResponseEntity<DroneProfileResponse> createProfile(
         @RequestHeader("X-User-Id") String userId,
         @Valid @RequestBody DroneProfileRequest request
@@ -52,6 +58,7 @@ public class DroneProfileController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Update a drone profile", description = "Updates a drone profile owned by the authenticated user.")
     public DroneProfileResponse updateProfile(
         @RequestHeader("X-User-Id") String userId,
         @PathVariable String id,
@@ -61,6 +68,7 @@ public class DroneProfileController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a drone profile", description = "Deletes a drone profile owned by the authenticated user.")
     public ResponseEntity<Void> deleteProfile(
         @RequestHeader("X-User-Id") String userId,
         @PathVariable String id

@@ -1,11 +1,13 @@
 package com.pedaerial.operatorflightcheck.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Max;
@@ -14,10 +16,22 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "drone_profiles")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class DroneProfile {
 
     @Id
@@ -72,6 +86,10 @@ public class DroneProfile {
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
+    @Builder.Default
+    @OneToMany(mappedBy = "profile", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<SpotCheck> spotChecks = new ArrayList<>();
+
     @PrePersist
     void prePersist() {
         if (id == null || id.isBlank()) {
@@ -80,93 +98,5 @@ public class DroneProfile {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public Integer getWindGreenMph() {
-        return windGreenMph;
-    }
-
-    public void setWindGreenMph(Integer windGreenMph) {
-        this.windGreenMph = windGreenMph;
-    }
-
-    public Integer getWindYellowMph() {
-        return windYellowMph;
-    }
-
-    public void setWindYellowMph(Integer windYellowMph) {
-        this.windYellowMph = windYellowMph;
-    }
-
-    public Integer getGustGreenMph() {
-        return gustGreenMph;
-    }
-
-    public void setGustGreenMph(Integer gustGreenMph) {
-        this.gustGreenMph = gustGreenMph;
-    }
-
-    public Integer getGustYellowMph() {
-        return gustYellowMph;
-    }
-
-    public void setGustYellowMph(Integer gustYellowMph) {
-        this.gustYellowMph = gustYellowMph;
-    }
-
-    public Integer getPrecipGreenPct() {
-        return precipGreenPct;
-    }
-
-    public void setPrecipGreenPct(Integer precipGreenPct) {
-        this.precipGreenPct = precipGreenPct;
-    }
-
-    public Integer getPrecipYellowPct() {
-        return precipYellowPct;
-    }
-
-    public void setPrecipYellowPct(Integer precipYellowPct) {
-        this.precipYellowPct = precipYellowPct;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

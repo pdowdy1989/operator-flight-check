@@ -50,6 +50,12 @@ class SecurityConfigTests {
             .andExpect(status().isOk());
     }
 
+    @Test
+    void swaggerEndpointsRemainPublic() throws Exception {
+        mockMvc.perform(get("/v3/api-docs"))
+            .andExpect(status().isOk());
+    }
+
     @RestController
     @RequestMapping("/api/admin")
     static class TestAdminController {

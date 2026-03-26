@@ -1,11 +1,13 @@
 package com.pedaerial.operatorflightcheck.entity;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.DecimalMax;
@@ -15,10 +17,22 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Entity
 @Table(name = "spots")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder(toBuilder = true)
 public class Spot {
 
     @Id
@@ -54,10 +68,16 @@ public class Spot {
 
     @NotNull
     @Column(nullable = false)
+    @Builder.Default
     private Boolean favorite = false;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
+
+    // Mirror the database cascade at the JPA layer so deleting a spot also clears its checks in ORM workflows.
+    @Builder.Default
+    @OneToMany(mappedBy = "spot", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<SpotCheck> spotChecks = new ArrayList<>();
 
     @PrePersist
     void prePersist() {
@@ -70,77 +90,5 @@ public class Spot {
         if (createdAt == null) {
             createdAt = Instant.now();
         }
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public String getLabel() {
-        return label;
-    }
-
-    public void setLabel(String label) {
-        this.label = label;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public BigDecimal getLat() {
-        return lat;
-    }
-
-    public void setLat(BigDecimal lat) {
-        this.lat = lat;
-    }
-
-    public BigDecimal getLon() {
-        return lon;
-    }
-
-    public void setLon(BigDecimal lon) {
-        this.lon = lon;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public Boolean getFavorite() {
-        return favorite;
-    }
-
-    public void setFavorite(Boolean favorite) {
-        this.favorite = favorite;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public void setCreatedAt(Instant createdAt) {
-        this.createdAt = createdAt;
     }
 }

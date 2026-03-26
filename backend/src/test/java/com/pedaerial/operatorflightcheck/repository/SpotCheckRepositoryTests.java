@@ -13,6 +13,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 @DataJpaTest
 class SpotCheckRepositoryTests {
@@ -62,6 +64,28 @@ class SpotCheckRepositoryTests {
         assertThat(savedCheck.getCreatedAt()).isNotNull();
         assertThat(savedCheck.getSpot().getId()).isEqualTo(spot.getId());
         assertThat(savedCheck.getProfile().getId()).isEqualTo(profile.getId());
+    }
+
+    @Test
+    // Verifies that the custom @Query method supports pageable spot-check history for a single user.
+    void findPageByUserIdReturnsPagedHistory() {
+        User owner = createUser("paged-history@pedaerial.com");
+        User other = createUser("paged-history-other@pedaerial.com");
+        DroneProfile ownerProfile = createProfile(owner, "Owner Profile");
+        DroneProfile otherProfile = createProfile(other, "Other Profile");
+        Spot ownerSpot = createSpot(owner, "Owner Spot");
+        Spot otherSpot = createSpot(other, "Other Spot");
+
+        spotCheckRepository.save(createSpotCheck(ownerSpot, owner, ownerProfile, LocalDate.of(2026, 3, 22), "GREEN"));
+        spotCheckRepository.save(createSpotCheck(ownerSpot, owner, ownerProfile, LocalDate.of(2026, 3, 23), "YELLOW"));
+        spotCheckRepository.save(createSpotCheck(otherSpot, other, otherProfile, LocalDate.of(2026, 3, 24), "RED"));
+
+        Page<SpotCheck> page = spotCheckRepository.findPageByUserId(owner.getId(), PageRequest.of(0, 10));
+
+        assertThat(page.getContent()).hasSize(2);
+        assertThat(page.getContent())
+            .extracting(SpotCheck::getStatus)
+            .containsExactly("YELLOW", "GREEN");
     }
 
     private User createUser(String email) {
