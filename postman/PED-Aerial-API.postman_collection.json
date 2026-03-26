@@ -1,0 +1,669 @@
+{
+  "info": {
+    "_postman_id": "bf4d33dd-9dc5-4c34-8c39-1e9f7d8824af",
+    "name": "PED Aerial API",
+    "description": "Postman collection for the PED Aerial backend. Includes auth, health, saved spots, and drone profile flows with automatic JWT handling, request chaining, and response assertions.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Keep the auth headers in sync for every protected request in the collection.",
+          "const token = pm.environment.get('jwt_token');",
+          "const userId = pm.environment.get('current_user_id');",
+          "",
+          "if (token && !pm.request.url.path.includes('auth')) {",
+          "  pm.request.headers.upsert({ key: 'Authorization', value: `Bearer ${token}` });",
+          "}",
+          "",
+          "if (userId && !pm.request.url.path.includes('auth')) {",
+          "  pm.request.headers.upsert({ key: 'X-User-Id', value: userId });",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "{{base_url}}"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "GET /api/health",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Health check returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Health payload reports service status', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.status).to.eql('UP');",
+                  "  pm.expect(json.service).to.eql('operator-flight-check-backend');",
+                  "  pm.expect(json.timestamp).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            },
+            "description": "Confirms that the backend is up before running authenticated flows."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "POST /api/auth/register",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Generate a unique email so the register request can be rerun without manual edits.",
+                  "const uniqueEmail = `pilot+${Date.now()}@pedaerial.com`;",
+                  "pm.environment.set('register_email', uniqueEmail);",
+                  "",
+                  "if (!pm.environment.get('register_password')) {",
+                  "  pm.environment.set('register_password', 'password123');",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Register returns 201 Created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Register returns auth payload and location header', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(pm.response.headers.get('Location')).to.eql('/api/auth/me');",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.email).to.eql(pm.environment.get('register_email'));",
+                  "  pm.expect(json.role).to.eql('USER');",
+                  "  pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "// Save the newly registered user for downstream requests.",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('jwt_token', json.token);",
+                  "pm.environment.set('current_user_id', json.id);",
+                  "pm.environment.set('auth_email', json.email);",
+                  "pm.environment.set('auth_password', pm.environment.get('register_password'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{register_email}}\",\n  \"password\": \"{{register_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Creates a fresh user and stores the returned JWT + user id in the active environment."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/auth/login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Login returns 200 OK', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Login returns a JWT for the configured user', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.email).to.eql(pm.environment.get('auth_email'));",
+                  "  pm.expect(json.role).to.eql('USER');",
+                  "  pm.expect(json.token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('jwt_token', json.token);",
+                  "pm.environment.set('current_user_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{auth_email}}\",\n  \"password\": \"{{auth_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Logs in with an existing user. By default this can use the seeded demo account or the user created in the register request."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/auth/me",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Current user endpoint returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Current user matches stored auth context', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('current_user_id'));",
+                  "  pm.expect(json.email).to.eql(pm.environment.get('auth_email'));",
+                  "  pm.expect(json.role).to.eql('USER');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/auth/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            },
+            "description": "Checks the currently authenticated user using the saved JWT."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Saved Spots",
+      "item": [
+        {
+          "name": "GET /api/spots",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List spots returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('List spots returns an array', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/spots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "spots"
+              ]
+            },
+            "description": "Lists saved spots for the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/spots",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create spot returns 201 Created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Create spot returns saved spot payload', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.label).to.eql('Laguna Cliffs');",
+                  "  pm.expect(json.address).to.eql('Laguna Cliffs, Dana Point, CA');",
+                  "  pm.expect(json.userId).to.eql(pm.environment.get('current_user_id'));",
+                  "  pm.expect(json.favorite).to.eql(true);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('spot_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Laguna Cliffs\",\n  \"address\": \"Laguna Cliffs, Dana Point, CA\",\n  \"lat\": 33.460100,\n  \"lon\": -117.700400,\n  \"notes\": \"Primary coastal launch site\",\n  \"favorite\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/spots",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "spots"
+              ]
+            },
+            "description": "Creates a saved spot and stores the returned spot id for the rest of the CRUD flow."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/spots/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get spot returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Get spot returns the requested saved spot', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('spot_id'));",
+                  "  pm.expect(json.label).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/spots/{{spot_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "spots",
+                "{{spot_id}}"
+              ]
+            },
+            "description": "Fetches the specific saved spot created earlier."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/spots/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Update spot returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Update spot reflects changed fields', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('spot_id'));",
+                  "  pm.expect(json.label).to.eql('Laguna Cliffs Updated');",
+                  "  pm.expect(json.favorite).to.eql(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"label\": \"Laguna Cliffs Updated\",\n  \"address\": \"Laguna Cliffs, Dana Point, CA\",\n  \"lat\": 33.460100,\n  \"lon\": -117.700400,\n  \"notes\": \"Updated note\",\n  \"favorite\": false\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/spots/{{spot_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "spots",
+                "{{spot_id}}"
+              ]
+            },
+            "description": "Updates the saved spot using the stored spot id."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/spots/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete spot returns 204 No Content', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/spots/{{spot_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "spots",
+                "{{spot_id}}"
+              ]
+            },
+            "description": "Deletes the saved spot created during this collection run."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Drone Profiles",
+      "item": [
+        {
+          "name": "GET /api/drone-profiles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List drone profiles returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('List drone profiles returns an array', function () {",
+                  "  pm.expect(pm.response.json()).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drone-profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drone-profiles"
+              ]
+            },
+            "description": "Lists all drone profiles owned by the authenticated user."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/drone-profiles",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Create profile returns 201 Created', function () {",
+                  "  pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Create profile returns persisted thresholds', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.be.a('string').and.not.empty;",
+                  "  pm.expect(json.name).to.eql('DJI Air 3');",
+                  "  pm.expect(json.type).to.eql('Prosumer');",
+                  "  pm.expect(json.userId).to.eql(pm.environment.get('current_user_id'));",
+                  "  pm.expect(json.gustYellowMph).to.eql(24);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.environment.set('profile_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"DJI Air 3\",\n  \"type\": \"Prosumer\",\n  \"windGreenMph\": 12,\n  \"windYellowMph\": 18,\n  \"gustGreenMph\": 16,\n  \"gustYellowMph\": 24,\n  \"precipGreenPct\": 10,\n  \"precipYellowPct\": 30\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drone-profiles",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drone-profiles"
+              ]
+            },
+            "description": "Creates a drone profile and stores the returned profile id for follow-up requests."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/drone-profiles/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Get profile returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Get profile returns the requested profile', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('profile_id'));",
+                  "  pm.expect(json.name).to.be.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drone-profiles/{{profile_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drone-profiles",
+                "{{profile_id}}"
+              ]
+            },
+            "description": "Fetches the specific drone profile created earlier."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/drone-profiles/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Update profile returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Update profile reflects changed thresholds', function () {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.id).to.eql(pm.environment.get('profile_id'));",
+                  "  pm.expect(json.name).to.eql('DJI Air 3 Updated');",
+                  "  pm.expect(json.gustYellowMph).to.eql(26);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"DJI Air 3 Updated\",\n  \"type\": \"Prosumer\",\n  \"windGreenMph\": 14,\n  \"windYellowMph\": 20,\n  \"gustGreenMph\": 18,\n  \"gustYellowMph\": 26,\n  \"precipGreenPct\": 12,\n  \"precipYellowPct\": 32\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/drone-profiles/{{profile_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drone-profiles",
+                "{{profile_id}}"
+              ]
+            },
+            "description": "Updates the stored drone profile with new threshold values."
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /api/drone-profiles/:id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete profile returns 204 No Content', function () {",
+                  "  pm.response.to.have.status(204);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/drone-profiles/{{profile_id}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "drone-profiles",
+                "{{profile_id}}"
+              ]
+            },
+            "description": "Deletes the profile created during this run."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

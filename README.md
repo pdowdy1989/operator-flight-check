@@ -213,9 +213,9 @@ mvn test
 mvn jacoco:report
 # Report at: target/site/jacoco/index.html
 
-# Run SonarQube analysis (Docker required)
-docker run -d --name sonarqube -p 9000:9000 sonarqube:latest
-mvn sonar:sonar -Dsonar.host.url=http://localhost:9000
+# Run SonarQube Cloud analysis
+$env:SONAR_TOKEN="your-token"
+mvn clean verify sonar:sonar -Dsonar.token=$env:SONAR_TOKEN
 ```
 
 ---
