@@ -58,7 +58,7 @@ public class DroneProfileService {
         droneProfileRepository.delete(profile);
     }
 
-    private DroneProfile getOwnedProfile(String userId, String profileId) {
+    public DroneProfile getOwnedProfile(String userId, String profileId) {
         return droneProfileRepository.findByIdAndUserId(profileId, userId)
             .orElseThrow(() -> new ResourceNotFoundException("Drone profile not found: " + profileId));
     }

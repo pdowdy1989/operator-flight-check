@@ -18,7 +18,7 @@
     <description>Backend for the Operator Flight Check application.</description>
 
     <properties>
-        <java.version>17</java.version>
+        <java.version>25</java.version>
         <jjwt.version>0.11.5</jjwt.version>
         <springdoc.version>2.8.16</springdoc.version>
         <sonar.organization>pdowdy1989</sonar.organization>
