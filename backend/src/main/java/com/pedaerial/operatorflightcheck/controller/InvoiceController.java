@@ -3,24 +3,16 @@ package com.pedaerial.operatorflightcheck.controller;
 import com.pedaerial.operatorflightcheck.dto.InvoiceRequest;
 import com.pedaerial.operatorflightcheck.dto.InvoiceResponse;
 import com.pedaerial.operatorflightcheck.dto.InvoiceStatusUpdateRequest;
+import com.pedaerial.operatorflightcheck.entity.Role;
+import com.pedaerial.operatorflightcheck.security.AppUserPrincipal;
 import com.pedaerial.operatorflightcheck.service.InvoiceService;
 import jakarta.validation.Valid;
-import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/invoices")
@@ -33,70 +25,42 @@ public class InvoiceController {
     }
 
     @PostMapping
-    public ResponseEntity<InvoiceResponse> createInvoice(
-        @RequestHeader("X-User-Id") String userId,
-        @Valid @RequestBody InvoiceRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(invoiceService.createInvoice(userId, request));
+    public ResponseEntity<InvoiceResponse> createInvoice(@Valid @RequestBody InvoiceRequest request,
+                                                          @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(invoiceService.createInvoice(request, principal.getId()));
     }
 
     @GetMapping
-    public ResponseEntity<Page<InvoiceResponse>> getInvoices(
-        @RequestHeader("X-User-Id") String userId,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size
-    ) {
-        return ResponseEntity.ok(invoiceService.getInvoices(userId, PageRequest.of(page, size)));
+    public ResponseEntity<List<InvoiceResponse>> listInvoices(@AuthenticationPrincipal AppUserPrincipal principal) {
+        List<InvoiceResponse> invoices = principal.getRole() == Role.CLIENT
+            ? invoiceService.getInvoicesForClientUser(principal.getId())
+            : invoiceService.getInvoicesForPilot(principal.getId());
+        return ResponseEntity.ok(invoices);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<InvoiceResponse> getInvoiceById(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id
-    ) {
-        return ResponseEntity.ok(invoiceService.getInvoiceById(userId, id));
+    public ResponseEntity<InvoiceResponse> getInvoice(@PathVariable UUID id,
+                                                       @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(invoiceService.getInvoice(id, principal.getId()));
     }
 
-    @GetMapping("/client/{clientId}")
-    public ResponseEntity<List<InvoiceResponse>> getInvoicesByClient(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String clientId
-    ) {
-        return ResponseEntity.ok(invoiceService.getInvoicesByClient(userId, clientId));
-    }
-
-    @GetMapping("/status/{status}")
-    public ResponseEntity<List<InvoiceResponse>> getInvoicesByStatus(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String status
-    ) {
-        return ResponseEntity.ok(invoiceService.getInvoicesByStatus(userId, status));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<InvoiceResponse> updateInvoice(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id,
-        @Valid @RequestBody InvoiceRequest request
-    ) {
-        return ResponseEntity.ok(invoiceService.updateInvoice(userId, id, request));
+    @GetMapping("/by-job/{jobId}")
+    public ResponseEntity<InvoiceResponse> getInvoiceByJob(@PathVariable UUID jobId,
+                                                            @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(invoiceService.getInvoiceByJob(jobId));
     }
 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<InvoiceResponse> updateInvoiceStatus(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id,
-        @Valid @RequestBody InvoiceStatusUpdateRequest request
-    ) {
-        return ResponseEntity.ok(invoiceService.updateInvoiceStatus(userId, id, request.getStatus()));
+    public ResponseEntity<InvoiceResponse> updateStatus(@PathVariable UUID id,
+                                                         @Valid @RequestBody InvoiceStatusUpdateRequest request,
+                                                         @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(invoiceService.updateInvoiceStatus(id, request.status(), principal.getId()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteInvoice(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id
-    ) {
-        invoiceService.deleteInvoice(userId, id);
+    public ResponseEntity<Void> deleteInvoice(@PathVariable UUID id,
+                                               @AuthenticationPrincipal AppUserPrincipal principal) {
+        invoiceService.deleteInvoice(id, principal.getId());
         return ResponseEntity.noContent().build();
     }
 }

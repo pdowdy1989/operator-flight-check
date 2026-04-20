@@ -11,14 +11,23 @@ public record AuthRegisterRequest(
 
     @NotBlank(message = "Password is required.")
     @Size(min = 8, message = "Password must be at least 8 characters.")
-    String password
+    String password,
+
+    String role,
+    String firstName,
+    String lastName,
+    String phone,
+    String company,
+    String licenseNumber
 ) {
     public AuthRegisterRequest {
-        if (email != null) {
-            email = email.trim();
-        }
-        if (password != null) {
-            password = password.trim();
-        }
+        if (email != null) email = email.trim();
+        if (password != null) password = password.trim();
+        if (role != null) role = role.trim();
+        if (firstName != null) firstName = firstName.trim();
+        if (lastName != null) lastName = lastName.trim();
+        if (phone != null) phone = phone.trim();
+        if (company != null) company = company.trim();
+        if (licenseNumber != null) licenseNumber = licenseNumber.trim();
     }
 }

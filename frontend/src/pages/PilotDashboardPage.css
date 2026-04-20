@@ -1,0 +1,6 @@
+.pilot-dash__stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-8); }
+.pilot-dash__header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+.pilot-dash__section-title { font-size: var(--text-lg); font-weight: 600; color: var(--color-text); margin: 0; }
+.pilot-dash__new-btn { background: var(--color-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-4); font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.pilot-dash__job-grid { display: flex; flex-direction: column; gap: var(--space-3); }
+.pilot-dash__empty { text-align: center; padding: var(--space-12) var(--space-6); color: var(--color-text-muted); display: flex; flex-direction: column; align-items: center; gap: var(--space-4); font-size: var(--text-sm); }

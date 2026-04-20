@@ -1,24 +1,15 @@
 package com.pedaerial.operatorflightcheck.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "payments")
@@ -29,15 +20,16 @@ import lombok.NoArgsConstructor;
 public class Payment {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
-    private String id;
-
-    @NotBlank
-    @Column(name = "invoice_id", nullable = false, length = 36)
-    private String invoiceId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
+    private UUID id;
 
     @NotNull
-    @DecimalMin("0.01")
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "invoice_id", nullable = false)
+    private Invoice invoice;
+
+    @NotNull
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal amount;
 
@@ -45,27 +37,16 @@ public class Payment {
     @Column(name = "payment_date", nullable = false)
     private LocalDate paymentDate;
 
-    @NotBlank
-    @Column(nullable = false, length = 20)
-    private String method;
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Column(name = "method", nullable = false, length = 20)
+    private PaymentMethod method;
 
+    @Size(max = 200)
     @Column(name = "reference_note", length = 200)
     private String referenceNote;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "invoice_id", nullable = false, insertable = false, updatable = false)
-    private Invoice invoice;
-
-    @PrePersist
-    void prePersist() {
-        if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
-        }
-        if (createdAt == null) {
-            createdAt = Instant.now();
-        }
-    }
 }

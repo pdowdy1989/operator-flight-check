@@ -46,9 +46,8 @@ class AuthServiceTests {
     }
 
     @Test
-    // Verifies that valid credentials return a normalized auth payload with a signed token.
     void loginReturnsTokenForValidCredentials() {
-        User user = user("pilot@pedaerial.com", "hashed-password");
+        User user = pilotUser("pilot@pedaerial.com", "hashed-password");
         when(userRepository.findByEmail("pilot@pedaerial.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("password123", "hashed-password")).thenReturn(true);
         when(jwtService.generateToken(any(AppUserPrincipal.class))).thenReturn("jwt-token");
@@ -56,12 +55,11 @@ class AuthServiceTests {
         AuthResponse response = authService.login(new AuthLoginRequest("  PILOT@pedaerial.com  ", "password123"));
 
         assertThat(response.email()).isEqualTo("pilot@pedaerial.com");
-        assertThat(response.role()).isEqualTo("USER");
+        assertThat(response.role()).isEqualTo("PILOT");
         assertThat(response.token()).isEqualTo("jwt-token");
     }
 
     @Test
-    // Verifies that login rejects unknown emails without leaking which accounts exist.
     void loginRejectsUnknownEmail() {
         when(userRepository.findByEmail("missing@pedaerial.com")).thenReturn(Optional.empty());
 
@@ -71,9 +69,8 @@ class AuthServiceTests {
     }
 
     @Test
-    // Verifies that login rejects incorrect passwords even when the account exists.
     void loginRejectsWrongPassword() {
-        User user = user("pilot@pedaerial.com", "hashed-password");
+        User user = pilotUser("pilot@pedaerial.com", "hashed-password");
         when(userRepository.findByEmail("pilot@pedaerial.com")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong-password", "hashed-password")).thenReturn(false);
 
@@ -83,7 +80,6 @@ class AuthServiceTests {
     }
 
     @Test
-    // Verifies that registration hashes the password, normalizes the email, and returns a tokenized session.
     void registerCreatesUserAndReturnsToken() {
         when(userRepository.findByEmail("newpilot@pedaerial.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password123")).thenReturn("hashed-password");
@@ -94,20 +90,43 @@ class AuthServiceTests {
         });
         when(jwtService.generateToken(any(AppUserPrincipal.class))).thenReturn("jwt-token");
 
-        AuthResponse response = authService.register(new AuthRegisterRequest("  NewPilot@Pedaerial.com  ", "password123"));
+        AuthResponse response = authService.register(
+            new AuthRegisterRequest("  NewPilot@Pedaerial.com  ", "password123", "ADMIN", null, null, null, null, null)
+        );
 
         assertThat(response.id()).isEqualTo("user-123");
         assertThat(response.email()).isEqualTo("newpilot@pedaerial.com");
+        assertThat(response.role()).isEqualTo("ADMIN");
         assertThat(response.token()).isEqualTo("jwt-token");
         verify(passwordEncoder).encode("password123");
     }
 
     @Test
-    // Verifies that duplicate registrations are blocked before writing a second user record.
-    void registerRejectsDuplicateEmail() {
-        when(userRepository.findByEmail("existing@pedaerial.com")).thenReturn(Optional.of(user("existing@pedaerial.com", "hash")));
+    void registerDefaultsToClientRole() {
+        when(userRepository.findByEmail("new@pedaerial.com")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("password123")).thenReturn("hashed");
+        when(userRepository.save(any(User.class))).thenAnswer(inv -> {
+            User saved = inv.getArgument(0);
+            saved.setId("u-1");
+            return saved;
+        });
+        when(jwtService.generateToken(any())).thenReturn("tok");
 
-        assertThatThrownBy(() -> authService.register(new AuthRegisterRequest("existing@pedaerial.com", "password123")))
+        AuthResponse response = authService.register(
+            new AuthRegisterRequest("new@pedaerial.com", "password123", null, null, null, null, null, null)
+        );
+
+        assertThat(response.role()).isEqualTo("CLIENT");
+    }
+
+    @Test
+    void registerRejectsDuplicateEmail() {
+        when(userRepository.findByEmail("existing@pedaerial.com"))
+            .thenReturn(Optional.of(pilotUser("existing@pedaerial.com", "hash")));
+
+        assertThatThrownBy(() -> authService.register(
+            new AuthRegisterRequest("existing@pedaerial.com", "password123", null, null, null, null, null, null)
+        ))
             .isInstanceOf(DuplicateEmailException.class)
             .hasMessage("Email already exists: existing@pedaerial.com");
 
@@ -115,43 +134,41 @@ class AuthServiceTests {
     }
 
     @Test
-    // Verifies that the current-user response is derived directly from the authenticated principal.
     void meReturnsCurrentPrincipalDetails() {
-        AppUserPrincipal principal = new AppUserPrincipal(user("pilot@pedaerial.com", "hash"));
+        AppUserPrincipal principal = new AppUserPrincipal(pilotUser("pilot@pedaerial.com", "hash"));
 
         CurrentUserResponse response = authService.me(principal);
 
         assertThat(response.email()).isEqualTo("pilot@pedaerial.com");
-        assertThat(response.role()).isEqualTo("USER");
+        assertThat(response.role()).isEqualTo("PILOT");
     }
 
     @Test
-    // Verifies that demo seeding creates a default user only when one does not already exist.
     void seedDemoUserCreatesMissingUser() {
         when(userRepository.findByEmail("demo@pedaerial.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password123")).thenReturn("hashed-password");
 
-        authService.seedDemoUser("  demo@pedaerial.com  ", "password123");
+        authService.seedDemoUser("  demo@pedaerial.com  ", "password123", Role.ADMIN, "Demo", "User", null, null);
 
         verify(userRepository).save(any(User.class));
     }
 
     @Test
-    // Verifies that demo seeding becomes a no-op when the demo user is already present.
     void seedDemoUserSkipsExistingUser() {
-        when(userRepository.findByEmail("demo@pedaerial.com")).thenReturn(Optional.of(user("demo@pedaerial.com", "hash")));
+        when(userRepository.findByEmail("demo@pedaerial.com"))
+            .thenReturn(Optional.of(pilotUser("demo@pedaerial.com", "hash")));
 
-        authService.seedDemoUser("demo@pedaerial.com", "password123");
+        authService.seedDemoUser("demo@pedaerial.com", "password123", Role.PILOT, null, null, null, null);
 
         verify(userRepository, never()).save(any(User.class));
     }
 
-    private User user(String email, String passwordHash) {
+    private User pilotUser(String email, String passwordHash) {
         User user = new User();
         user.setId("user-1");
         user.setEmail(email);
         user.setPasswordHash(passwordHash);
-        user.setRole(Role.USER);
+        user.setRole(Role.PILOT);
         return user;
     }
 }

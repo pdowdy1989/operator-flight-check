@@ -1,13 +1,12 @@
 package com.pedaerial.operatorflightcheck.repository;
 
 import com.pedaerial.operatorflightcheck.entity.DroneProfile;
-import java.util.List;
-import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface DroneProfileRepository extends JpaRepository<DroneProfile, String> {
+import java.util.List;
+import java.util.UUID;
 
-    List<DroneProfile> findByUserId(String userId);
-
-    Optional<DroneProfile> findByIdAndUserId(String id, String userId);
+public interface DroneProfileRepository extends JpaRepository<DroneProfile, UUID> {
+    List<DroneProfile> findByPilotIdOrderByNameAsc(String pilotId);
+    List<DroneProfile> findByPilotIdAndActiveTrue(String pilotId);
 }

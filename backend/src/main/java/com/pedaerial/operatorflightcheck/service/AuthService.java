@@ -52,7 +52,12 @@ public class AuthService {
         User user = new User();
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(request.password()));
-        user.setRole(Role.USER);
+        user.setRole(resolveRequestedRole(request.role()));
+        user.setFirstName(request.firstName());
+        user.setLastName(request.lastName());
+        user.setPhone(request.phone());
+        user.setCompany(request.company());
+        user.setLicenseNumber(request.licenseNumber());
 
         User savedUser = userRepository.save(user);
         return buildAuthResponse(savedUser);
@@ -66,7 +71,8 @@ public class AuthService {
         );
     }
 
-    public void seedDemoUser(String email, String password) {
+    public void seedDemoUser(String email, String password, Role role, String firstName, String lastName,
+                              String company, String licenseNumber) {
         String normalizedEmail = email.trim().toLowerCase();
 
         if (userRepository.findByEmail(normalizedEmail).isPresent()) {
@@ -76,8 +82,24 @@ public class AuthService {
         User user = new User();
         user.setEmail(normalizedEmail);
         user.setPasswordHash(passwordEncoder.encode(password));
-        user.setRole(Role.USER);
+        user.setRole(role);
+        user.setFirstName(firstName);
+        user.setLastName(lastName);
+        user.setCompany(company);
+        user.setLicenseNumber(licenseNumber);
         userRepository.save(user);
+    }
+
+    private Role resolveRequestedRole(String rawRole) {
+        if (rawRole == null || rawRole.isBlank()) {
+            return Role.CLIENT;
+        }
+
+        try {
+            return Role.valueOf(rawRole.trim().toUpperCase());
+        } catch (IllegalArgumentException ignored) {
+            return Role.CLIENT;
+        }
     }
 
     private AuthResponse buildAuthResponse(User user) {
@@ -86,6 +108,9 @@ public class AuthService {
             user.getId(),
             user.getEmail(),
             user.getRole().name(),
+            user.getFirstName(),
+            user.getLastName(),
+            user.getCompany(),
             jwtService.generateToken(principal)
         );
     }

@@ -18,11 +18,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class AuthControllerTests {
 
     @Autowired
@@ -49,7 +51,7 @@ class AuthControllerTests {
             .andExpect(status().isCreated())
             .andExpect(header().string("Location", "/api/auth/me"))
             .andExpect(jsonPath("$.email").value("newpilot@pedaerial.com"))
-            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(jsonPath("$.role").value("CLIENT"))
             .andExpect(jsonPath("$.token").isString());
 
         User savedUser = userRepository.findByEmail("newpilot@pedaerial.com").orElseThrow();
@@ -103,7 +105,7 @@ class AuthControllerTests {
                     """))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.email").value("login@pedaerial.com"))
-            .andExpect(jsonPath("$.role").value("USER"))
+            .andExpect(jsonPath("$.role").value("CLIENT"))
             .andExpect(jsonPath("$.token").isString())
             .andExpect(jsonPath("$.token", not("")));
     }
@@ -159,7 +161,7 @@ class AuthControllerTests {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(user.getId()))
             .andExpect(jsonPath("$.email").value(user.getEmail()))
-            .andExpect(jsonPath("$.role").value("USER"));
+            .andExpect(jsonPath("$.role").value("CLIENT"));
     }
 
     private User createUser(String email, String passwordHash) {

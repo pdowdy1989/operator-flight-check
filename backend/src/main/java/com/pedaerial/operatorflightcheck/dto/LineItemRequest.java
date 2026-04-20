@@ -1,29 +1,21 @@
 package com.pedaerial.operatorflightcheck.dto;
 
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
 import java.math.BigDecimal;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class LineItemRequest {
-    private String missionId;
+public record LineItemRequest(
+    @NotBlank(message = "Description is required.")
+    @Size(max = 255)
+    String description,
 
-    @NotBlank
-    private String description;
+    @NotNull(message = "Quantity is required.")
+    BigDecimal quantity,
 
-    @NotNull
-    @DecimalMin("0.01")
-    private BigDecimal quantity;
+    @NotNull(message = "Unit price is required.")
+    BigDecimal unitPrice,
 
-    @NotNull
-    @DecimalMin("0")
-    private BigDecimal unitPrice;
-}
+    Integer sortOrder
+) {}

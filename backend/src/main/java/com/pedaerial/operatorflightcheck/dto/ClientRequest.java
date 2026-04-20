@@ -1,26 +1,31 @@
 package com.pedaerial.operatorflightcheck.dto;
 
+import com.pedaerial.operatorflightcheck.entity.ClientType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ClientRequest {
-
-    @NotBlank
-    private String name;
+public record ClientRequest(
+    @NotBlank(message = "Client name is required.")
+    @Size(max = 255)
+    String name,
 
     @Email
-    private String email;
+    @Size(max = 255)
+    String email,
 
-    private String company;
-    private String phone;
-    private String billingAddress;
-    private String notes;
-}
+    @Size(max = 50)
+    String phone,
+
+    @Size(max = 255)
+    String company,
+
+    @NotNull(message = "Client type is required.")
+    ClientType clientType,
+
+    @Size(max = 500)
+    String address,
+
+    String notes
+) {}

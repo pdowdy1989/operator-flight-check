@@ -1,122 +1,214 @@
 package com.pedaerial.operatorflightcheck.service;
 
-import com.pedaerial.operatorflightcheck.dto.ClientResponse;
-import com.pedaerial.operatorflightcheck.dto.DroneProfileResponse;
-import com.pedaerial.operatorflightcheck.dto.InvoiceResponse;
-import com.pedaerial.operatorflightcheck.dto.LineItemResponse;
-import com.pedaerial.operatorflightcheck.dto.MissionResponse;
-import com.pedaerial.operatorflightcheck.dto.PaymentResponse;
-import com.pedaerial.operatorflightcheck.entity.Client;
-import com.pedaerial.operatorflightcheck.entity.DroneProfile;
-import com.pedaerial.operatorflightcheck.entity.Invoice;
-import com.pedaerial.operatorflightcheck.entity.LineItem;
-import com.pedaerial.operatorflightcheck.entity.Mission;
-import com.pedaerial.operatorflightcheck.entity.Payment;
-import java.util.List;
+import com.pedaerial.operatorflightcheck.dto.*;
+import com.pedaerial.operatorflightcheck.entity.*;
+import org.springframework.stereotype.Service;
 
-final class ResponseMapper {
+import java.util.UUID;
+import java.util.stream.Collectors;
 
-    private ResponseMapper() {
-    }
+@Service
+public class ResponseMapper {
 
-    static ClientResponse toClientResponse(Client client) {
-        return ClientResponse.builder()
-            .id(client.getId())
-            .name(client.getName())
-            .email(client.getEmail())
-            .company(client.getCompany())
-            .phone(client.getPhone())
-            .billingAddress(client.getBillingAddress())
-            .notes(client.getNotes())
-            .createdAt(client.getCreatedAt())
-            .updatedAt(client.getUpdatedAt())
-            .missionCount(client.getMissions() == null ? 0 : client.getMissions().size())
-            .invoiceCount(client.getInvoices() == null ? 0 : client.getInvoices().size())
-            .build();
-    }
-
-    static DroneProfileResponse toDroneProfileResponse(DroneProfile profile) {
-        return new DroneProfileResponse(
-            profile.getId(),
-            profile.getUser().getId(),
-            profile.getName(),
-            profile.getType(),
-            profile.getWindGreenMph(),
-            profile.getWindYellowMph(),
-            profile.getGustGreenMph(),
-            profile.getGustYellowMph(),
-            profile.getPrecipGreenPct(),
-            profile.getPrecipYellowPct(),
-            profile.getCreatedAt()
+    public ClientResponse toClientResponse(Client client) {
+        return new ClientResponse(
+            client.getId(),
+            client.getPilot().getId(),
+            client.getName(),
+            client.getEmail(),
+            client.getPhone(),
+            client.getCompany(),
+            client.getClientType(),
+            client.getAddress(),
+            client.getNotes(),
+            client.getCreatedAt()
         );
     }
 
-    static MissionResponse toMissionResponse(Mission mission) {
-        return MissionResponse.builder()
-            .id(mission.getId())
-            .clientId(mission.getClientId())
-            .clientName(mission.getClient() != null ? mission.getClient().getName() : null)
-            .droneProfileId(mission.getDroneProfileId())
-            .droneProfileName(mission.getDroneProfile() != null ? mission.getDroneProfile().getName() : null)
-            .title(mission.getTitle())
-            .description(mission.getDescription())
-            .locationLabel(mission.getLocationLabel())
-            .locationAddress(mission.getLocationAddress())
-            .locationLat(mission.getLocationLat())
-            .locationLon(mission.getLocationLon())
-            .missionDate(mission.getMissionDate())
-            .status(mission.getStatus())
-            .flyScore(mission.getFlyScore())
-            .weatherSummary(mission.getWeatherSummary())
-            .durationHours(mission.getDurationHours())
-            .notes(mission.getNotes())
-            .createdAt(mission.getCreatedAt())
-            .updatedAt(mission.getUpdatedAt())
-            .build();
+    public DroneProfileResponse toDroneProfileResponse(DroneProfile drone) {
+        return new DroneProfileResponse(
+            drone.getId(),
+            drone.getPilot().getId(),
+            drone.getName(),
+            drone.getManufacturer(),
+            drone.getModel(),
+            drone.getSerialNumber(),
+            drone.getFaaRegistration(),
+            drone.getWeightGrams(),
+            drone.getMaxWindMph(),
+            drone.getMaxGustMph(),
+            drone.getNotes(),
+            drone.getActive(),
+            drone.getCreatedAt()
+        );
     }
 
-    static LineItemResponse toLineItemResponse(LineItem lineItem) {
-        return LineItemResponse.builder()
-            .id(lineItem.getId())
-            .missionId(lineItem.getMissionId())
-            .missionTitle(lineItem.getMission() != null ? lineItem.getMission().getTitle() : null)
-            .description(lineItem.getDescription())
-            .quantity(lineItem.getQuantity())
-            .unitPrice(lineItem.getUnitPrice())
-            .amount(lineItem.getAmount())
-            .sortOrder(lineItem.getSortOrder())
-            .build();
+    public InsuranceDetailsResponse toInsuranceDetailsResponse(InsuranceDetails details) {
+        if (details == null) return null;
+        return new InsuranceDetailsResponse(
+            details.getId(),
+            details.getJob().getId(),
+            details.getClaimNumber(),
+            details.getPolicyNumber(),
+            details.getInsuranceCompany(),
+            details.getAdjusterName(),
+            details.getAdjusterEmail(),
+            details.getAdjusterPhone(),
+            details.getLossDate(),
+            details.getLossType(),
+            details.getPropertyType(),
+            details.getInspectionScope(),
+            details.getCreatedAt()
+        );
     }
 
-    static PaymentResponse toPaymentResponse(Payment payment) {
-        return PaymentResponse.builder()
-            .id(payment.getId())
-            .invoiceId(payment.getInvoiceId())
-            .amount(payment.getAmount())
-            .paymentDate(payment.getPaymentDate())
-            .method(payment.getMethod())
-            .referenceNote(payment.getReferenceNote())
-            .createdAt(payment.getCreatedAt())
-            .build();
+    public JobResponse toJobResponse(Job job, long documentCount) {
+        String pilotId = job.getPilot() != null ? job.getPilot().getId() : null;
+        String pilotName = job.getPilot() != null
+            ? fullName(job.getPilot().getFirstName(), job.getPilot().getLastName())
+            : null;
+        return new JobResponse(
+            job.getId(),
+            pilotId,
+            pilotName,
+            job.getClient().getId(),
+            job.getClient().getName(),
+            job.getClient().getClientType().name(),
+            job.getTitle(),
+            job.getDescription(),
+            job.getJobType(),
+            job.getStatus(),
+            job.getPriority(),
+            job.getSiteAddress(),
+            job.getSiteLat(),
+            job.getSiteLon(),
+            job.getScheduledDate(),
+            job.getScheduledTime(),
+            job.getEstimatedDuration(),
+            job.getActualDuration(),
+            job.getNotes(),
+            documentCount,
+            toInsuranceDetailsResponse(job.getInsuranceDetails()),
+            job.getCreatedAt(),
+            job.getUpdatedAt()
+        );
     }
 
-    static InvoiceResponse toInvoiceResponse(Invoice invoice, List<LineItem> lineItems, List<Payment> payments) {
-        return InvoiceResponse.builder()
-            .id(invoice.getId())
-            .clientId(invoice.getClientId())
-            .clientName(invoice.getClient() != null ? invoice.getClient().getName() : null)
-            .invoiceNumber(invoice.getInvoiceNumber())
-            .status(invoice.getStatus())
-            .issueDate(invoice.getIssueDate())
-            .dueDate(invoice.getDueDate())
-            .notes(invoice.getNotes())
-            .lineItems(lineItems.stream().map(ResponseMapper::toLineItemResponse).toList())
-            .payments(payments.stream().map(ResponseMapper::toPaymentResponse).toList())
-            .totalAmount(invoice.getTotalAmount())
-            .amountPaid(invoice.getAmountPaid())
-            .balanceDue(invoice.getBalanceDue())
-            .createdAt(invoice.getCreatedAt())
-            .updatedAt(invoice.getUpdatedAt())
-            .build();
+    public MissionResponse toMissionResponse(Mission mission) {
+        String droneName = mission.getDroneProfile() != null ? mission.getDroneProfile().getName() : null;
+        UUID droneId = mission.getDroneProfile() != null ? mission.getDroneProfile().getId() : null;
+        return new MissionResponse(
+            mission.getId(),
+            mission.getJob().getId(),
+            mission.getJob().getTitle(),
+            mission.getPilot().getId(),
+            droneId,
+            droneName,
+            mission.getFlightDate(),
+            mission.getFlightTime(),
+            mission.getDurationMinutes(),
+            mission.getWeatherTempF(),
+            mission.getWeatherWindMph(),
+            mission.getWeatherGustMph(),
+            mission.getWeatherConditions(),
+            mission.getWeatherVisibility(),
+            mission.getFlyScore(),
+            mission.getStatus(),
+            mission.getNotes(),
+            mission.getCreatedAt()
+        );
+    }
+
+    public DocumentResponse toDocumentResponse(Document doc, String baseUrl) {
+        String uploaderName = fullName(doc.getUploadedBy().getFirstName(), doc.getUploadedBy().getLastName());
+        UUID missionId = doc.getMission() != null ? doc.getMission().getId() : null;
+        String downloadUrl = baseUrl + "/api/documents/" + doc.getId() + "/download";
+        return new DocumentResponse(
+            doc.getId(),
+            doc.getJob().getId(),
+            missionId,
+            doc.getUploadedBy().getId(),
+            uploaderName,
+            doc.getFileName(),
+            doc.getFileType(),
+            doc.getFilePath(),
+            doc.getFileSizeBytes(),
+            doc.getThumbnailPath(),
+            doc.getMimeType(),
+            doc.getDescription(),
+            doc.getTags(),
+            doc.getCategory(),
+            doc.getIsDeliverable(),
+            downloadUrl,
+            doc.getCreatedAt()
+        );
+    }
+
+    public InspectionReportResponse toInspectionReportResponse(InspectionReport report) {
+        String reviewedById = report.getReviewedBy() != null ? report.getReviewedBy().getId() : null;
+        return new InspectionReportResponse(
+            report.getId(),
+            report.getJob().getId(),
+            report.getPilot().getId(),
+            fullName(report.getPilot().getFirstName(), report.getPilot().getLastName()),
+            report.getReportDate(),
+            report.getPropertyCondition(),
+            report.getDamageFound(),
+            report.getDamageSummary(),
+            report.getRoofCondition(),
+            report.getExteriorCondition(),
+            report.getAdditionalFindings(),
+            report.getRecommendations(),
+            report.getPilotSignature(),
+            report.getStatus(),
+            report.getReviewerNotes(),
+            reviewedById,
+            report.getReviewedAt(),
+            report.getCreatedAt(),
+            report.getUpdatedAt()
+        );
+    }
+
+    public LineItemResponse toLineItemResponse(LineItem item) {
+        return new LineItemResponse(
+            item.getId(),
+            item.getDescription(),
+            item.getQuantity(),
+            item.getUnitPrice(),
+            item.getAmount(),
+            item.getSortOrder()
+        );
+    }
+
+    public InvoiceResponse toInvoiceResponse(Invoice invoice) {
+        var lineItems = invoice.getLineItems().stream()
+            .map(this::toLineItemResponse)
+            .collect(Collectors.toList());
+        return new InvoiceResponse(
+            invoice.getId(),
+            invoice.getJob().getId(),
+            invoice.getJob().getTitle(),
+            invoice.getPilot().getId(),
+            invoice.getInvoiceNumber(),
+            invoice.getClient().getId(),
+            invoice.getClient().getName(),
+            invoice.getAmount(),
+            invoice.getTaxAmount(),
+            invoice.getTotalAmount(),
+            invoice.getStatus(),
+            invoice.getDueDate(),
+            invoice.getPaidDate(),
+            invoice.getNotes(),
+            lineItems,
+            invoice.getCreatedAt(),
+            invoice.getUpdatedAt()
+        );
+    }
+
+    private String fullName(String firstName, String lastName) {
+        if (firstName == null && lastName == null) return null;
+        if (firstName == null) return lastName;
+        if (lastName == null) return firstName;
+        return firstName + " " + lastName;
     }
 }

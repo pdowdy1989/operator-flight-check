@@ -1,0 +1,14 @@
+.job-detail__meta { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); font-size: var(--text-sm); color: var(--color-text-muted); }
+.job-detail__client, .job-detail__type, .job-detail__addr { color: var(--color-text-muted); }
+.job-detail__overview { display: flex; flex-direction: column; gap: var(--space-6); }
+.job-detail__desc { color: var(--color-text-muted); font-size: var(--text-sm); margin: 0; }
+.job-detail__info-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: var(--space-4); }
+.job-detail__info-field { display: flex; flex-direction: column; gap: 2px; }
+.job-detail__info-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--color-text-muted); font-weight: 600; }
+.job-detail__tab-content { display: flex; flex-direction: column; gap: var(--space-5); }
+.job-detail__tab-header { display: flex; align-items: center; justify-content: space-between; }
+.job-detail__tab-header h3 { margin: 0; font-size: var(--text-base); font-weight: 600; color: var(--color-text); }
+.job-detail__add-btn { background: var(--color-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-4); font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.job-detail__mission-list { display: flex; flex-direction: column; gap: var(--space-3); }
+.job-detail__doc-section { margin-top: var(--space-4); }
+.job-detail__empty { color: var(--color-text-muted); font-size: var(--text-sm); }

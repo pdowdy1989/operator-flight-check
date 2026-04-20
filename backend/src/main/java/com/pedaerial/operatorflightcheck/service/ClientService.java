@@ -3,74 +3,86 @@ package com.pedaerial.operatorflightcheck.service;
 import com.pedaerial.operatorflightcheck.dto.ClientRequest;
 import com.pedaerial.operatorflightcheck.dto.ClientResponse;
 import com.pedaerial.operatorflightcheck.entity.Client;
+import com.pedaerial.operatorflightcheck.entity.User;
 import com.pedaerial.operatorflightcheck.exception.ResourceNotFoundException;
+import com.pedaerial.operatorflightcheck.exception.UnauthorizedException;
 import com.pedaerial.operatorflightcheck.repository.ClientRepository;
-import java.util.List;
+import com.pedaerial.operatorflightcheck.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
+@Transactional
 public class ClientService {
 
     private final ClientRepository clientRepository;
+    private final UserRepository userRepository;
+    private final ResponseMapper mapper;
 
-    public ClientService(ClientRepository clientRepository) {
+    public ClientService(ClientRepository clientRepository, UserRepository userRepository, ResponseMapper mapper) {
         this.clientRepository = clientRepository;
+        this.userRepository = userRepository;
+        this.mapper = mapper;
     }
 
-    @Transactional
-    public ClientResponse createClient(String userId, ClientRequest req) {
+    public ClientResponse createClient(ClientRequest request, String pilotId) {
+        User pilot = userRepository.findById(pilotId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + pilotId));
+
         Client client = Client.builder()
-            .userId(userId)
-            .name(req.getName())
-            .email(req.getEmail())
-            .company(req.getCompany())
-            .phone(req.getPhone())
-            .billingAddress(req.getBillingAddress())
-            .notes(req.getNotes())
+            .pilot(pilot)
+            .name(request.name())
+            .email(request.email())
+            .phone(request.phone())
+            .company(request.company())
+            .clientType(request.clientType())
+            .address(request.address())
+            .notes(request.notes())
             .build();
-        return ResponseMapper.toClientResponse(clientRepository.save(client));
+
+        return mapper.toClientResponse(clientRepository.save(client));
     }
 
     @Transactional(readOnly = true)
-    public List<ClientResponse> getClients(String userId) {
-        return clientRepository.findByUserIdOrderByNameAsc(userId).stream()
-            .map(ResponseMapper::toClientResponse)
-            .toList();
+    public List<ClientResponse> getClientsForPilot(String pilotId) {
+        return clientRepository.findByPilotIdOrderByNameAsc(pilotId)
+            .stream().map(mapper::toClientResponse).toList();
     }
 
     @Transactional(readOnly = true)
-    public ClientResponse getClientById(String userId, String clientId) {
-        return ResponseMapper.toClientResponse(getOwnedClient(userId, clientId));
+    public ClientResponse getClient(UUID clientId, String requesterId) {
+        Client client = findClientOwned(clientId, requesterId);
+        return mapper.toClientResponse(client);
     }
 
-    @Transactional(readOnly = true)
-    public List<ClientResponse> searchClients(String userId, String query) {
-        return clientRepository.searchByUserIdAndQuery(userId, query == null ? "" : query.trim()).stream()
-            .map(ResponseMapper::toClientResponse)
-            .toList();
+    public ClientResponse updateClient(UUID clientId, ClientRequest request, String requesterId) {
+        Client client = findClientOwned(clientId, requesterId);
+
+        client.setName(request.name());
+        client.setEmail(request.email());
+        client.setPhone(request.phone());
+        client.setCompany(request.company());
+        client.setClientType(request.clientType());
+        client.setAddress(request.address());
+        client.setNotes(request.notes());
+
+        return mapper.toClientResponse(clientRepository.save(client));
     }
 
-    @Transactional
-    public ClientResponse updateClient(String userId, String clientId, ClientRequest req) {
-        Client client = getOwnedClient(userId, clientId);
-        client.setName(req.getName());
-        client.setEmail(req.getEmail());
-        client.setCompany(req.getCompany());
-        client.setPhone(req.getPhone());
-        client.setBillingAddress(req.getBillingAddress());
-        client.setNotes(req.getNotes());
-        return ResponseMapper.toClientResponse(clientRepository.save(client));
+    public void deleteClient(UUID clientId, String requesterId) {
+        Client client = findClientOwned(clientId, requesterId);
+        clientRepository.delete(client);
     }
 
-    @Transactional
-    public void deleteClient(String userId, String clientId) {
-        clientRepository.delete(getOwnedClient(userId, clientId));
-    }
-
-    @Transactional(readOnly = true)
-    protected Client getOwnedClient(String userId, String clientId) {
-        return clientRepository.findByIdAndUserId(clientId, userId)
+    private Client findClientOwned(UUID clientId, String requesterId) {
+        Client client = clientRepository.findById(clientId)
             .orElseThrow(() -> new ResourceNotFoundException("Client not found: " + clientId));
+        if (!client.getPilot().getId().equals(requesterId)) {
+            throw new UnauthorizedException("Access denied.");
+        }
+        return client;
     }
 }

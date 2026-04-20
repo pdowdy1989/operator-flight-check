@@ -17,7 +17,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
 
-    private static final long ACCESS_TOKEN_EXPIRY_MINUTES = 15;
+    // 8-hour expiry for demo stability. Production would use short-lived access
+    // tokens plus a refresh token rotation scheme.
+    private static final long ACCESS_TOKEN_EXPIRY_MINUTES = 480;
 
     private final Key signingKey;
 

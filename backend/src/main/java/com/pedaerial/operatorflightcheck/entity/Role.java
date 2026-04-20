@@ -1,6 +1,8 @@
 package com.pedaerial.operatorflightcheck.entity;
 
 public enum Role {
-    USER,
+    PILOT,
+    COMPANY,
+    CLIENT,
     ADMIN
 }

@@ -1,15 +1,40 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import { useToast } from "../context/ToastContext";
 import { useAuth } from "../context/AuthContext";
+import { getHomePathForRole } from "../utils/roleRouting";
+import "./RegisterPage.css";
+
+const ROLE_CONFIG = {
+  pilot: {
+    value: "PILOT",
+    title: "Pilot account",
+    subtitle: "Create a pilot workspace for missions, drones, clients, and billing.",
+    cta: "Create pilot account",
+  },
+  client: {
+    value: "CLIENT",
+    title: "Client account",
+    subtitle: "Create a client portal for project tracking, documents, and invoices.",
+    cta: "Create client account",
+  },
+  company: {
+    value: "COMPANY",
+    title: "Company account",
+    subtitle: "Create a company workspace for inspections, reports, and claim coordination.",
+    cta: "Create company account",
+  },
+};
 
 export default function RegisterPage() {
+  const { roleType } = useParams();
   const navigate = useNavigate();
   const { register } = useAuth();
   const { showToast } = useToast();
+  const roleConfig = useMemo(() => ROLE_CONFIG[roleType] ?? null, [roleType]);
   const [form, setForm] = useState({ email: "", password: "", confirmPassword: "" });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -18,27 +43,36 @@ export default function RegisterPage() {
     setForm((prev) => ({ ...prev, [field]: e.target.value }));
 
   const validate = () => {
-    const e = {};
-    if (!form.email.trim()) e.email = "Email is required.";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = "Enter a valid email address.";
-    if (!form.password.trim()) e.password = "Password is required.";
-    else if (form.password.length < 8) e.password = "Password must be at least 8 characters.";
-    if (!form.confirmPassword.trim()) e.confirmPassword = "Please confirm your password.";
-    else if (form.password !== form.confirmPassword) e.confirmPassword = "Passwords do not match.";
-    return e;
+    const nextErrors = {};
+    if (!form.email.trim()) nextErrors.email = "Email is required.";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) nextErrors.email = "Enter a valid email address.";
+    if (!form.password.trim()) nextErrors.password = "Password is required.";
+    else if (form.password.length < 8) nextErrors.password = "Password must be at least 8 characters.";
+    if (!form.confirmPassword.trim()) nextErrors.confirmPassword = "Please confirm your password.";
+    else if (form.password !== form.confirmPassword) nextErrors.confirmPassword = "Passwords do not match.";
+    return nextErrors;
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
+    const nextErrors = validate();
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      return;
+    }
+
     setErrors({});
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 450));
+    await new Promise((resolve) => setTimeout(resolve, 450));
+
     try {
-      await register({ email: form.email, password: form.password });
+      const session = await register({
+        email: form.email,
+        password: form.password,
+        role: roleConfig?.value,
+      });
       showToast({ title: "Account created", description: "Welcome to PED AERIAL!", variant: "success" });
-      navigate("/dashboard", { replace: true });
+      navigate(getHomePathForRole(session?.role), { replace: true });
     } catch (err) {
       setErrors({ confirmPassword: err.message || "Unable to create your account." });
     } finally {
@@ -46,20 +80,52 @@ export default function RegisterPage() {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-surface-secondary flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-sm">
-        {/* Brand */}
-        <div className="text-center mb-8">
-          <span className="text-brand-orange font-bold text-xl tracking-tight">PED AERIAL</span>
-          <h1 className="text-2xl font-bold text-text-primary mt-2">Create account</h1>
-          <p className="text-text-secondary text-sm mt-1">
-            Start planning your flights in under a minute.
+  if (!roleConfig) {
+    return (
+      <div className="register-page">
+        <div className="register-page__shell">
+          <div className="register-page__intro">
+            <span className="register-page__brand">PED AERIAL</span>
+            <h1 className="register-page__title">Choose your account type</h1>
+            <p className="register-page__subtitle">
+              Pick the signup flow that matches how you will use the platform.
+            </p>
+          </div>
+
+          <div className="register-page__role-list">
+            {Object.entries(ROLE_CONFIG).map(([key, option]) => (
+              <Link
+                key={key}
+                to={`/register/${key}`}
+                className="register-page__role-card"
+              >
+                <span className="register-page__role-title">{option.title}</span>
+                <span className="register-page__role-subtitle">{option.subtitle}</span>
+              </Link>
+            ))}
+          </div>
+
+          <p className="register-page__helper-link">
+            Already have an account?{" "}
+            <Link to="/login" className="register-page__helper-anchor">
+              Sign in
+            </Link>
           </p>
         </div>
+      </div>
+    );
+  }
 
-        {/* Card */}
-        <div className="bg-white rounded-3xl border border-border shadow-card p-6">
+  return (
+    <div className="register-page">
+      <div className="register-page__shell register-page__shell--form">
+        <div className="register-page__intro">
+          <span className="register-page__brand">PED AERIAL</span>
+          <h1 className="register-page__title">{roleConfig.title}</h1>
+          <p className="register-page__subtitle">{roleConfig.subtitle}</p>
+        </div>
+
+        <div className="register-page__form-card">
           <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
             <Input
               id="register-email"
@@ -95,6 +161,10 @@ export default function RegisterPage() {
               required
               autoComplete="new-password"
             />
+            <div className="register-page__type-chip">
+              <strong>Account type</strong>
+              <span>{roleConfig.title}</span>
+            </div>
             <Button
               type="submit"
               size="lg"
@@ -102,14 +172,21 @@ export default function RegisterPage() {
               className="w-full mt-1"
               aria-label="Create your account"
             >
-              {isSubmitting ? <LoadingSpinner size="sm" label="" /> : "Create account"}
+              {isSubmitting ? <LoadingSpinner size="sm" label="" /> : roleConfig.cta}
             </Button>
           </form>
         </div>
 
-        <p className="text-center text-sm text-text-secondary mt-6">
+        <p className="register-page__helper-link">
+          Need a different account type?{" "}
+          <Link to="/register" className="register-page__helper-anchor">
+            Choose another signup
+          </Link>
+        </p>
+
+        <p className="register-page__helper-link register-page__helper-link--tight">
           Already have an account?{" "}
-          <Link to="/login" className="text-brand-orange font-semibold hover:underline">
+          <Link to="/login" className="register-page__helper-anchor">
             Sign in
           </Link>
         </p>

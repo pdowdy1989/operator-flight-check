@@ -15,6 +15,9 @@ export default {
           peach: "#FFD9C2",
           tide: "#155E75",
           glow: "#F97316",
+          orange: "#F97316",
+          "orange-bg": "#FFF7ED",
+          "orange-light": "#FDBA74",
         },
         status: {
           green: "#16A34A",

@@ -13,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Import(SecurityConfigTests.TestAdminController.class)
+@ActiveProfiles("test")
 class SecurityConfigTests {
 
     @Autowired
@@ -39,7 +41,7 @@ class SecurityConfigTests {
     @Test
     void adminEndpointsRejectRegularUsers() throws Exception {
         mockMvc.perform(get("/api/admin/test")
-                .with(user("pilot").authorities(new SimpleGrantedAuthority("ROLE_USER"))))
+                .with(user("pilot").authorities(new SimpleGrantedAuthority("ROLE_PILOT"))))
             .andExpect(status().isForbidden());
     }
 

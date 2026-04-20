@@ -1,24 +1,17 @@
 package com.pedaerial.operatorflightcheck.controller;
 
+import com.pedaerial.operatorflightcheck.dto.MissionCompletionRequest;
 import com.pedaerial.operatorflightcheck.dto.MissionRequest;
 import com.pedaerial.operatorflightcheck.dto.MissionResponse;
+import com.pedaerial.operatorflightcheck.security.AppUserPrincipal;
 import com.pedaerial.operatorflightcheck.service.MissionService;
 import jakarta.validation.Valid;
-import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/missions")
@@ -31,53 +24,32 @@ public class MissionController {
     }
 
     @PostMapping
-    public ResponseEntity<MissionResponse> createMission(
-        @RequestHeader("X-User-Id") String userId,
-        @Valid @RequestBody MissionRequest request
-    ) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(missionService.createMission(userId, request));
+    public ResponseEntity<MissionResponse> createMission(@Valid @RequestBody MissionRequest request,
+                                                          @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(missionService.createMission(request, principal.getId()));
     }
 
-    @GetMapping
-    public ResponseEntity<Page<MissionResponse>> getMissions(
-        @RequestHeader("X-User-Id") String userId,
-        @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size
-    ) {
-        return ResponseEntity.ok(missionService.getMissions(userId, PageRequest.of(page, size)));
+    @GetMapping("/job/{jobId}")
+    public ResponseEntity<List<MissionResponse>> getMissionsForJob(@PathVariable UUID jobId) {
+        return ResponseEntity.ok(missionService.getMissionsForJob(jobId));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MissionResponse> getMissionById(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id
-    ) {
-        return ResponseEntity.ok(missionService.getMissionById(userId, id));
+    public ResponseEntity<MissionResponse> getMission(@PathVariable UUID id) {
+        return ResponseEntity.ok(missionService.getMission(id));
     }
 
-    @GetMapping("/client/{clientId}")
-    public ResponseEntity<List<MissionResponse>> getMissionsByClient(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String clientId
-    ) {
-        return ResponseEntity.ok(missionService.getMissionsByClient(userId, clientId));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<MissionResponse> updateMission(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id,
-        @Valid @RequestBody MissionRequest request
-    ) {
-        return ResponseEntity.ok(missionService.updateMission(userId, id, request));
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<MissionResponse> completeMission(@PathVariable UUID id,
+                                                            @RequestBody MissionCompletionRequest request,
+                                                            @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(missionService.completeMission(id, request, principal.getId()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteMission(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id
-    ) {
-        missionService.deleteMission(userId, id);
+    public ResponseEntity<Void> deleteMission(@PathVariable UUID id,
+                                               @AuthenticationPrincipal AppUserPrincipal principal) {
+        missionService.deleteMission(id, principal.getId());
         return ResponseEntity.noContent().build();
     }
 }

@@ -1,0 +1,15 @@
+.clients-page__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); font-size: var(--text-sm); color: var(--color-text-muted); }
+.clients-page__btn { background: var(--color-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-4); font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.clients-page__form { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); }
+.clients-page__grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.clients-page__grid input, .clients-page__grid select { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); color: var(--color-text); font-size: var(--text-sm); }
+.clients-page__save-btn { background: var(--color-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-5); font-size: var(--text-sm); font-weight: 600; cursor: pointer; align-self: flex-end; }
+.clients-page__list { display: flex; flex-direction: column; gap: var(--space-3); }
+.client-card { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); }
+.client-card__header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); }
+.client-card__name { font-weight: 600; color: var(--color-text); font-size: var(--text-sm); }
+.client-card__company { font-size: var(--text-xs); color: var(--color-text-muted); }
+.client-card__type { font-size: var(--text-xs); font-weight: 600; }
+.client-card__meta { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: var(--space-3); }
+.client-card__delete { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 2px 10px; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+.client-card__delete:hover { border-color: #ef4444; color: #ef4444; }

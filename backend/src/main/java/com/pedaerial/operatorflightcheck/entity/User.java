@@ -1,12 +1,10 @@
 package com.pedaerial.operatorflightcheck.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
@@ -14,8 +12,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,22 +47,30 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private Role role = Role.USER;
+    private Role role = Role.CLIENT;
+
+    @Size(max = 100)
+    @Column(name = "first_name", length = 100)
+    private String firstName;
+
+    @Size(max = 100)
+    @Column(name = "last_name", length = 100)
+    private String lastName;
+
+    @Size(max = 50)
+    @Column(name = "phone", length = 50)
+    private String phone;
+
+    @Size(max = 255)
+    @Column(name = "company", length = 255)
+    private String company;
+
+    @Size(max = 50)
+    @Column(name = "license_number", length = 50)
+    private String licenseNumber;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
-
-    @Builder.Default
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DroneProfile> droneProfiles = new ArrayList<>();
-
-    @Builder.Default
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Spot> spots = new ArrayList<>();
-
-    @Builder.Default
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SpotCheck> spotChecks = new ArrayList<>();
 
     @PrePersist
     void prePersist() {
@@ -77,7 +81,7 @@ public class User {
             createdAt = Instant.now();
         }
         if (role == null) {
-            role = Role.USER;
+            role = Role.CLIENT;
         }
     }
 }

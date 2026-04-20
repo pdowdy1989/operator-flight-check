@@ -1,31 +1,18 @@
 package com.pedaerial.operatorflightcheck.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "invoices")
@@ -36,104 +23,65 @@ import lombok.NoArgsConstructor;
 public class Invoice {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
+    private UUID id;
 
-    @NotBlank
-    @Column(name = "user_id", nullable = false, length = 36)
-    private String userId;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_id", nullable = false)
+    private Job job;
 
-    @NotBlank
-    @Column(name = "client_id", nullable = false, length = 36)
-    private String clientId;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pilot_id", nullable = false)
+    private User pilot;
 
-    @NotBlank
-    @Size(max = 20)
-    @Column(name = "invoice_number", nullable = false, length = 20)
+    @NotNull
+    @Size(max = 50)
+    @Column(name = "invoice_number", nullable = false, unique = true, length = 50)
     private String invoiceNumber;
 
-    @NotBlank
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", nullable = false)
+    private Client client;
+
+    @NotNull
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal amount;
+
     @Builder.Default
-    @Column(nullable = false, length = 20)
-    private String status = InvoiceStatus.DRAFT.name();
+    @Column(name = "tax_amount", precision = 10, scale = 2)
+    private BigDecimal taxAmount = BigDecimal.ZERO;
 
     @NotNull
-    @Column(name = "issue_date", nullable = false)
-    private LocalDate issueDate;
+    @Column(name = "total_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal totalAmount;
 
-    @NotNull
-    @Column(name = "due_date", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(length = 20)
+    private InvoiceStatus status = InvoiceStatus.DRAFT;
+
+    @Column(name = "due_date")
     private LocalDate dueDate;
+
+    @Column(name = "paid_date")
+    private LocalDate paidDate;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, insertable = false, updatable = false)
-    private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false, insertable = false, updatable = false)
-    private Client client;
 
     @Builder.Default
     @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LineItem> lineItems = new ArrayList<>();
 
-    @Builder.Default
-    @OneToMany(mappedBy = "invoice", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Payment> payments = new ArrayList<>();
+    @CreationTimestamp
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
-    @PrePersist
-    void prePersist() {
-        if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
-        }
-        Instant now = Instant.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
-        if (status == null || status.isBlank()) {
-            status = InvoiceStatus.DRAFT.name();
-        }
-    }
-
-    @PreUpdate
-    void preUpdate() {
-        updatedAt = Instant.now();
-    }
-
-    @Transient
-    public BigDecimal getTotalAmount() {
-        if (lineItems == null) {
-            return BigDecimal.ZERO;
-        }
-        return lineItems.stream()
-            .map(LineItem::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    @Transient
-    public BigDecimal getAmountPaid() {
-        if (payments == null) {
-            return BigDecimal.ZERO;
-        }
-        return payments.stream()
-            .map(Payment::getAmount)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    @Transient
-    public BigDecimal getBalanceDue() {
-        return getTotalAmount().subtract(getAmountPaid());
-    }
+    @UpdateTimestamp
+    @Column(name = "updated_at")
+    private Instant updatedAt;
 }

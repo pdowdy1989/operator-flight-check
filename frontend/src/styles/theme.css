@@ -1,0 +1,133 @@
+:root {
+  /* ── Aliases used by page CSS files ───────────────────────────── */
+  --color-text:         var(--text-primary);
+  --color-text-muted:   var(--text-muted);
+  --color-surface:      var(--bg-surface);
+  --color-surface-raised: var(--bg-elevated);
+  --color-border:       var(--border-default);
+  --color-primary:      var(--brand-blue);
+
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  /* ─────────────────────────────────────────────────────────────── */
+
+  --bg-base: #2a2d35;
+  --bg-surface: #1e2028;
+  --bg-surface-hover: #252830;
+  --bg-elevated: #161820;
+  --bg-input: #1a1d24;
+  --bg-overlay: rgba(0, 0, 0, 0.5);
+
+  --text-primary: #f0f0f0;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --text-inverse: #1a1a1a;
+
+  --brand-orange: #f97316;
+  --brand-blue: #0096ff;
+  --brand-blue-hover: #38b6ff;
+  --brand-blue-muted: rgba(0, 150, 255, 0.15);
+
+  --status-green: #22c55e;
+  --status-yellow: #f59e0b;
+  --status-red: #ef4444;
+  --status-green-bg: rgba(34, 197, 94, 0.12);
+  --status-yellow-bg: rgba(245, 158, 11, 0.12);
+  --status-red-bg: rgba(239, 68, 68, 0.12);
+
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-hover: rgba(255, 255, 255, 0.18);
+  --border-focus: var(--brand-blue);
+
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 12px;
+  --space-lg: 16px;
+  --space-xl: 24px;
+  --space-2xl: 32px;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  --text-xs: 11px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-lg: 16px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 32px;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+
+  --transition-fast: 150ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  --dashboard-glow-blue: rgba(0, 150, 255, 0.14);
+  --dashboard-glow-orange: rgba(249, 115, 22, 0.1);
+  --dashboard-card-overlay: rgba(255, 255, 255, 0.03);
+  --dashboard-map-overlay: rgba(22, 24, 32, 0.88);
+  --dashboard-map-overlay-strong: rgba(22, 24, 32, 0.94);
+  --dashboard-marker-ring: rgba(0, 150, 255, 0.28);
+  --dashboard-shimmer-start: rgba(255, 255, 255, 0.04);
+  --dashboard-shimmer-mid: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="light"] {
+  --color-text:           var(--text-primary);
+  --color-text-muted:     var(--text-muted);
+  --color-surface:        var(--bg-surface);
+  --color-surface-raised: var(--bg-elevated);
+  --color-border:         var(--border-default);
+  --color-primary:        var(--brand-blue);
+
+  --bg-base: #eef2f7;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f5f7fb;
+  --bg-elevated: #ffffff;
+  --bg-input: #ffffff;
+  --bg-overlay: rgba(15, 23, 42, 0.2);
+
+  --text-primary: #172033;
+  --text-secondary: #52607a;
+  --text-muted: #76839c;
+  --text-inverse: #ffffff;
+
+  --brand-blue-muted: rgba(0, 150, 255, 0.12);
+
+  --status-green-bg: rgba(34, 197, 94, 0.14);
+  --status-yellow-bg: rgba(245, 158, 11, 0.14);
+  --status-red-bg: rgba(239, 68, 68, 0.14);
+
+  --border-subtle: rgba(15, 23, 42, 0.06);
+  --border-default: rgba(15, 23, 42, 0.12);
+  --border-hover: rgba(15, 23, 42, 0.18);
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 8px 20px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 14px 36px rgba(15, 23, 42, 0.12);
+
+  --dashboard-glow-blue: rgba(0, 150, 255, 0.08);
+  --dashboard-glow-orange: rgba(249, 115, 22, 0.08);
+  --dashboard-card-overlay: rgba(15, 23, 42, 0.02);
+  --dashboard-map-overlay: rgba(255, 255, 255, 0.9);
+  --dashboard-map-overlay-strong: rgba(255, 255, 255, 0.94);
+  --dashboard-marker-ring: rgba(0, 150, 255, 0.22);
+  --dashboard-shimmer-start: rgba(15, 23, 42, 0.04);
+  --dashboard-shimmer-mid: rgba(15, 23, 42, 0.08);
+}

@@ -54,6 +54,8 @@ spring-shell.log
 # Environment / Secrets — NEVER commit these
 .env
 *.env
+*.env.properties
+.env.properties
 application-local.properties
 application-secret.properties
 

@@ -1,132 +1,116 @@
 package com.pedaerial.operatorflightcheck.service;
 
+import com.pedaerial.operatorflightcheck.dto.MissionCompletionRequest;
 import com.pedaerial.operatorflightcheck.dto.MissionRequest;
 import com.pedaerial.operatorflightcheck.dto.MissionResponse;
-import com.pedaerial.operatorflightcheck.entity.Client;
 import com.pedaerial.operatorflightcheck.entity.DroneProfile;
+import com.pedaerial.operatorflightcheck.entity.Job;
 import com.pedaerial.operatorflightcheck.entity.Mission;
 import com.pedaerial.operatorflightcheck.entity.MissionStatus;
+import com.pedaerial.operatorflightcheck.entity.User;
 import com.pedaerial.operatorflightcheck.exception.BadRequestException;
 import com.pedaerial.operatorflightcheck.exception.ResourceNotFoundException;
+import com.pedaerial.operatorflightcheck.exception.UnauthorizedException;
+import com.pedaerial.operatorflightcheck.repository.DroneProfileRepository;
+import com.pedaerial.operatorflightcheck.repository.JobRepository;
 import com.pedaerial.operatorflightcheck.repository.MissionRepository;
-import java.util.List;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.pedaerial.operatorflightcheck.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.UUID;
+
 @Service
+@Transactional
 public class MissionService {
 
     private final MissionRepository missionRepository;
-    private final ClientService clientService;
-    private final DroneProfileService droneProfileService;
+    private final JobRepository jobRepository;
+    private final UserRepository userRepository;
+    private final DroneProfileRepository droneProfileRepository;
+    private final ResponseMapper mapper;
 
-    public MissionService(
-        MissionRepository missionRepository,
-        ClientService clientService,
-        DroneProfileService droneProfileService
-    ) {
+    public MissionService(MissionRepository missionRepository, JobRepository jobRepository,
+                          UserRepository userRepository, DroneProfileRepository droneProfileRepository,
+                          ResponseMapper mapper) {
         this.missionRepository = missionRepository;
-        this.clientService = clientService;
-        this.droneProfileService = droneProfileService;
+        this.jobRepository = jobRepository;
+        this.userRepository = userRepository;
+        this.droneProfileRepository = droneProfileRepository;
+        this.mapper = mapper;
     }
 
-    @Transactional
-    public MissionResponse createMission(String userId, MissionRequest req) {
-        validateOwnership(userId, req.getClientId(), req.getDroneProfileId());
+    public MissionResponse createMission(MissionRequest request, String pilotId) {
+        Job job = jobRepository.findById(request.jobId())
+            .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + request.jobId()));
+
+        User pilot = userRepository.findById(pilotId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + pilotId));
+
+        DroneProfile drone = null;
+        if (request.droneProfileId() != null) {
+            drone = droneProfileRepository.findById(request.droneProfileId())
+                .orElseThrow(() -> new ResourceNotFoundException("Drone not found: " + request.droneProfileId()));
+        }
+
         Mission mission = Mission.builder()
-            .userId(userId)
-            .clientId(blankToNull(req.getClientId()))
-            .droneProfileId(blankToNull(req.getDroneProfileId()))
-            .title(req.getTitle())
-            .description(req.getDescription())
-            .locationLabel(req.getLocationLabel())
-            .locationAddress(req.getLocationAddress())
-            .locationLat(req.getLocationLat())
-            .locationLon(req.getLocationLon())
-            .missionDate(req.getMissionDate())
-            .status(resolveMissionStatus(req.getStatus()))
-            .flyScore(req.getFlyScore())
-            .weatherSummary(req.getWeatherSummary())
-            .durationHours(req.getDurationHours())
-            .notes(req.getNotes())
+            .job(job)
+            .pilot(pilot)
+            .droneProfile(drone)
+            .flightDate(request.flightDate())
+            .flightTime(request.flightTime())
+            .status(MissionStatus.PLANNED)
+            .notes(request.notes())
             .build();
-        return ResponseMapper.toMissionResponse(missionRepository.save(mission));
+
+        return mapper.toMissionResponse(missionRepository.save(mission));
+    }
+
+    public MissionResponse completeMission(UUID missionId, MissionCompletionRequest request, String pilotId) {
+        Mission mission = findMissionOwned(missionId, pilotId);
+
+        if (mission.getStatus() == MissionStatus.COMPLETED) {
+            throw new BadRequestException("Mission is already completed.");
+        }
+
+        mission.setDurationMinutes(request.durationMinutes());
+        mission.setWeatherTempF(request.weatherTempF());
+        mission.setWeatherWindMph(request.weatherWindMph());
+        mission.setWeatherGustMph(request.weatherGustMph());
+        mission.setWeatherConditions(request.weatherConditions());
+        mission.setWeatherVisibility(request.weatherVisibility());
+        mission.setFlyScore(request.flyScore());
+        mission.setStatus(MissionStatus.COMPLETED);
+        if (request.notes() != null) mission.setNotes(request.notes());
+
+        return mapper.toMissionResponse(missionRepository.save(mission));
     }
 
     @Transactional(readOnly = true)
-    public Page<MissionResponse> getMissions(String userId, Pageable pageable) {
-        return missionRepository.findByUserIdOrderByMissionDateDesc(userId, pageable)
-            .map(ResponseMapper::toMissionResponse);
+    public List<MissionResponse> getMissionsForJob(UUID jobId) {
+        return missionRepository.findByJobIdOrderByFlightDateDesc(jobId)
+            .stream().map(mapper::toMissionResponse).toList();
     }
 
     @Transactional(readOnly = true)
-    public MissionResponse getMissionById(String userId, String missionId) {
-        return ResponseMapper.toMissionResponse(getOwnedMission(userId, missionId));
-    }
-
-    @Transactional(readOnly = true)
-    public List<MissionResponse> getMissionsByClient(String userId, String clientId) {
-        clientService.getClientById(userId, clientId);
-        return missionRepository.findByUserIdAndClientId(userId, clientId).stream()
-            .map(ResponseMapper::toMissionResponse)
-            .toList();
-    }
-
-    @Transactional
-    public MissionResponse updateMission(String userId, String missionId, MissionRequest req) {
-        validateOwnership(userId, req.getClientId(), req.getDroneProfileId());
-        Mission mission = getOwnedMission(userId, missionId);
-        mission.setClientId(blankToNull(req.getClientId()));
-        mission.setDroneProfileId(blankToNull(req.getDroneProfileId()));
-        mission.setTitle(req.getTitle());
-        mission.setDescription(req.getDescription());
-        mission.setLocationLabel(req.getLocationLabel());
-        mission.setLocationAddress(req.getLocationAddress());
-        mission.setLocationLat(req.getLocationLat());
-        mission.setLocationLon(req.getLocationLon());
-        mission.setMissionDate(req.getMissionDate());
-        mission.setStatus(resolveMissionStatus(req.getStatus()));
-        mission.setFlyScore(req.getFlyScore());
-        mission.setWeatherSummary(req.getWeatherSummary());
-        mission.setDurationHours(req.getDurationHours());
-        mission.setNotes(req.getNotes());
-        return ResponseMapper.toMissionResponse(missionRepository.save(mission));
-    }
-
-    @Transactional
-    public void deleteMission(String userId, String missionId) {
-        missionRepository.delete(getOwnedMission(userId, missionId));
-    }
-
-    @Transactional(readOnly = true)
-    protected Mission getOwnedMission(String userId, String missionId) {
-        return missionRepository.findByIdAndUserId(missionId, userId)
+    public MissionResponse getMission(UUID missionId) {
+        Mission mission = missionRepository.findById(missionId)
             .orElseThrow(() -> new ResourceNotFoundException("Mission not found: " + missionId));
+        return mapper.toMissionResponse(mission);
     }
 
-    private void validateOwnership(String userId, String clientId, String droneProfileId) {
-        if (clientId != null && !clientId.isBlank()) {
-            Client ignored = clientService.getOwnedClient(userId, clientId);
-        }
-        if (droneProfileId != null && !droneProfileId.isBlank()) {
-            DroneProfile ignored = droneProfileService.getOwnedProfile(userId, droneProfileId);
-        }
+    public void deleteMission(UUID missionId, String pilotId) {
+        Mission mission = findMissionOwned(missionId, pilotId);
+        missionRepository.delete(mission);
     }
 
-    private String resolveMissionStatus(String status) {
-        if (status == null || status.isBlank()) {
-            return MissionStatus.PLANNED.name();
+    private Mission findMissionOwned(UUID missionId, String pilotId) {
+        Mission mission = missionRepository.findById(missionId)
+            .orElseThrow(() -> new ResourceNotFoundException("Mission not found: " + missionId));
+        if (!mission.getPilot().getId().equals(pilotId)) {
+            throw new UnauthorizedException("Access denied.");
         }
-        try {
-            return MissionStatus.valueOf(status.trim().toUpperCase()).name();
-        } catch (IllegalArgumentException ex) {
-            throw new BadRequestException("Invalid mission status: " + status);
-        }
-    }
-
-    private String blankToNull(String value) {
-        return value == null || value.isBlank() ? null : value;
+        return mission;
     }
 }

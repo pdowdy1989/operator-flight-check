@@ -1,14 +1,9 @@
 package com.pedaerial.operatorflightcheck.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.pedaerial.operatorflightcheck.entity.InvoiceStatus;
+import jakarta.validation.constraints.NotNull;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class InvoiceStatusUpdateRequest {
-    @NotBlank
-    private String status;
-}
+public record InvoiceStatusUpdateRequest(
+    @NotNull(message = "Status is required.")
+    InvoiceStatus status
+) {}

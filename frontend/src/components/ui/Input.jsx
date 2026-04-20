@@ -1,4 +1,5 @@
-// Reusable Input component — controlled, with label, error, and icon support
+import "./Input.css";
+
 export default function Input({
   id,
   label,
@@ -8,32 +9,28 @@ export default function Input({
   placeholder,
   error,
   hint,
+  helper,
   icon,
   disabled = false,
   required = false,
   autoComplete,
+  fullWidth = true,
   className = "",
   ...props
 }) {
   const inputId = id || label?.toLowerCase().replace(/\s+/g, "-");
+  const helperText = helper || hint;
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
-      {label && (
-        <label
-          htmlFor={inputId}
-          className="text-sm font-medium text-text-primary"
-        >
+    <div className={`ui-input-group ${fullWidth ? "full-width" : ""} ${className}`}>
+      {label ? (
+        <label htmlFor={inputId} className="ui-input-label">
           {label}
-          {required && <span className="text-status-red ml-0.5" aria-hidden="true">*</span>}
+          {required ? <span className="ui-input-required" aria-hidden="true">*</span> : null}
         </label>
-      )}
-      <div className="relative">
-        {icon && (
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none">
-            {icon}
-          </span>
-        )}
+      ) : null}
+      <div className={`ui-input-wrapper ${error ? "has-error" : ""} ${disabled ? "is-disabled" : ""}`}>
+        {icon ? <span className="ui-input-icon">{icon}</span> : null}
         <input
           id={inputId}
           type={type}
@@ -44,33 +41,21 @@ export default function Input({
           required={required}
           autoComplete={autoComplete}
           aria-invalid={!!error}
-          aria-describedby={error ? `${inputId}-error` : hint ? `${inputId}-hint` : undefined}
-          className={[
-            "w-full rounded-xl border bg-white px-3.5 py-2.5 text-base text-text-primary",
-            "placeholder:text-text-muted",
-            "focus:outline-none focus:ring-2 focus:ring-brand-orange focus:border-transparent",
-            "disabled:bg-surface-secondary disabled:cursor-not-allowed",
-            "min-h-[44px]",
-            icon ? "pl-10" : "",
-            error
-              ? "border-status-red ring-1 ring-status-red"
-              : "border-border hover:border-text-muted",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+          aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-hint` : undefined}
+          className="ui-input"
           {...props}
         />
       </div>
-      {error && (
-        <p id={`${inputId}-error`} className="text-sm text-status-red" role="alert">
+      {error ? (
+        <p id={`${inputId}-error`} className="ui-input-error" role="alert">
           {error}
         </p>
-      )}
-      {hint && !error && (
-        <p id={`${inputId}-hint`} className="text-sm text-text-muted">
-          {hint}
+      ) : null}
+      {helperText && !error ? (
+        <p id={`${inputId}-hint`} className="ui-input-helper">
+          {helperText}
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

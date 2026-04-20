@@ -1,18 +1,20 @@
 package com.pedaerial.operatorflightcheck.dto;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public record DroneProfileResponse(
-    String id,
-    String userId,
+    UUID id,
+    String pilotId,
     String name,
-    String type,
-    Integer windGreenMph,
-    Integer windYellowMph,
-    Integer gustGreenMph,
-    Integer gustYellowMph,
-    Integer precipGreenPct,
-    Integer precipYellowPct,
+    String manufacturer,
+    String model,
+    String serialNumber,
+    String faaRegistration,
+    Integer weightGrams,
+    Integer maxWindMph,
+    Integer maxGustMph,
+    String notes,
+    Boolean active,
     Instant createdAt
-) {
-}
+) {}

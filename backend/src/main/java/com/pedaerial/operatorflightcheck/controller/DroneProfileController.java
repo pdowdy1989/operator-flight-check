@@ -2,26 +2,18 @@ package com.pedaerial.operatorflightcheck.controller;
 
 import com.pedaerial.operatorflightcheck.dto.DroneProfileRequest;
 import com.pedaerial.operatorflightcheck.dto.DroneProfileResponse;
+import com.pedaerial.operatorflightcheck.security.AppUserPrincipal;
 import com.pedaerial.operatorflightcheck.service.DroneProfileService;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import java.net.URI;
-import java.util.List;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/drone-profiles")
-@Tag(name = "Drone Profiles", description = "Create and manage aircraft threshold profiles.")
+@RequestMapping("/api/drones")
 public class DroneProfileController {
 
     private final DroneProfileService droneProfileService;
@@ -30,50 +22,34 @@ public class DroneProfileController {
         this.droneProfileService = droneProfileService;
     }
 
+    @PostMapping
+    public ResponseEntity<DroneProfileResponse> createDrone(@Valid @RequestBody DroneProfileRequest request,
+                                                             @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(droneProfileService.createDroneProfile(request, principal.getId()));
+    }
+
     @GetMapping
-    @Operation(summary = "List drone profiles", description = "Returns all drone profiles owned by the authenticated user.")
-    public List<DroneProfileResponse> listProfiles(@RequestHeader("X-User-Id") String userId) {
-        return droneProfileService.getProfilesForUser(userId);
+    public ResponseEntity<List<DroneProfileResponse>> listDrones(@AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(droneProfileService.getDronesForPilot(principal.getId()));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get a drone profile", description = "Returns a single drone profile owned by the authenticated user.")
-    public DroneProfileResponse getProfile(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id
-    ) {
-        return droneProfileService.getProfileById(userId, id);
-    }
-
-    @PostMapping
-    @Operation(summary = "Create a drone profile", description = "Creates a new drone threshold profile.")
-    public ResponseEntity<DroneProfileResponse> createProfile(
-        @RequestHeader("X-User-Id") String userId,
-        @Valid @RequestBody DroneProfileRequest request
-    ) {
-        DroneProfileResponse response = droneProfileService.createProfile(userId, request);
-        return ResponseEntity
-            .created(URI.create("/api/drone-profiles/" + response.id()))
-            .body(response);
+    public ResponseEntity<DroneProfileResponse> getDrone(@PathVariable UUID id,
+                                                          @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(droneProfileService.getDrone(id, principal.getId()));
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update a drone profile", description = "Updates a drone profile owned by the authenticated user.")
-    public DroneProfileResponse updateProfile(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id,
-        @Valid @RequestBody DroneProfileRequest request
-    ) {
-        return droneProfileService.updateProfile(userId, id, request);
+    public ResponseEntity<DroneProfileResponse> updateDrone(@PathVariable UUID id,
+                                                             @Valid @RequestBody DroneProfileRequest request,
+                                                             @AuthenticationPrincipal AppUserPrincipal principal) {
+        return ResponseEntity.ok(droneProfileService.updateDrone(id, request, principal.getId()));
     }
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a drone profile", description = "Deletes a drone profile owned by the authenticated user.")
-    public ResponseEntity<Void> deleteProfile(
-        @RequestHeader("X-User-Id") String userId,
-        @PathVariable String id
-    ) {
-        droneProfileService.deleteProfile(userId, id);
+    public ResponseEntity<Void> deleteDrone(@PathVariable UUID id,
+                                             @AuthenticationPrincipal AppUserPrincipal principal) {
+        droneProfileService.deleteDrone(id, principal.getId());
         return ResponseEntity.noContent().build();
     }
 }

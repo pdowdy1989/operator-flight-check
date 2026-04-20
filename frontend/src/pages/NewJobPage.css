@@ -1,0 +1,18 @@
+.new-job__steps { display: flex; gap: var(--space-4); margin-bottom: var(--space-8); }
+.new-job__step { display: flex; align-items: center; gap: var(--space-2); font-size: var(--text-sm); color: var(--color-text-muted); }
+.new-job__step--active { color: var(--color-primary); font-weight: 600; }
+.new-job__step--done { color: var(--color-text); }
+.new-job__step-num { width: 24px; height: 24px; border-radius: 50%; border: 2px solid currentColor; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.new-job__section { display: flex; flex-direction: column; gap: var(--space-5); max-width: 600px; }
+.new-job__section h3 { margin: 0; font-size: var(--text-lg); color: var(--color-text); }
+.new-job__grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.new-job__input { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); color: var(--color-text); font-size: var(--text-sm); }
+.new-job__input--full { grid-column: 1 / -1; }
+.new-job__select { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); color: var(--color-text); font-size: var(--text-sm); }
+.new-job__divider { text-align: center; color: var(--color-text-muted); font-size: var(--text-xs); border-top: 1px solid var(--color-border); padding-top: var(--space-4); margin-top: var(--space-2); }
+.new-job__btn { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-5); font-size: var(--text-sm); cursor: pointer; color: var(--color-text); }
+.new-job__btn--primary { background: var(--color-primary); border-color: var(--color-primary); color: white; font-weight: 600; }
+.new-job__btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.new-job__nav { display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-4); }
+.new-job__review { display: flex; flex-direction: column; gap: var(--space-3); background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); font-size: var(--text-sm); color: var(--color-text-muted); }
+.new-job__review strong { color: var(--color-text); }

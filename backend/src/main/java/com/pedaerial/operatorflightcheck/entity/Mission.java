@@ -1,29 +1,14 @@
 package com.pedaerial.operatorflightcheck.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import java.math.BigDecimal;
+import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalTime;
 import java.util.UUID;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "missions")
@@ -34,109 +19,61 @@ import lombok.NoArgsConstructor;
 public class Mission {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
-    private String id;
-
-    @NotBlank
-    @Column(name = "user_id", nullable = false, length = 36)
-    private String userId;
-
-    @Column(name = "client_id", length = 36)
-    private String clientId;
-
-    @Column(name = "drone_profile_id", length = 36)
-    private String droneProfileId;
-
-    @NotBlank
-    @Size(max = 200)
-    @Column(nullable = false, length = 200)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
-    @Size(max = 200)
-    @Column(name = "location_label", length = 200)
-    private String locationLabel;
-
-    @Size(max = 500)
-    @Column(name = "location_address", length = 500)
-    private String locationAddress;
-
-    @Column(name = "location_lat", precision = 10, scale = 6)
-    private BigDecimal locationLat;
-
-    @Column(name = "location_lon", precision = 10, scale = 6)
-    private BigDecimal locationLon;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(updatable = false, nullable = false)
+    private UUID id;
 
     @NotNull
-    @Column(name = "mission_date", nullable = false)
-    private LocalDate missionDate;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "job_id", nullable = false)
+    private Job job;
 
-    @NotBlank
-    @Builder.Default
-    @Column(nullable = false, length = 20)
-    private String status = MissionStatus.PLANNED.name();
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pilot_id", nullable = false)
+    private User pilot;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "drone_profile_id")
+    private DroneProfile droneProfile;
+
+    @NotNull
+    @Column(name = "flight_date", nullable = false)
+    private LocalDate flightDate;
+
+    @Column(name = "flight_time")
+    private LocalTime flightTime;
+
+    @Column(name = "duration_minutes")
+    private Integer durationMinutes;
+
+    @Column(name = "weather_temp_f")
+    private Double weatherTempF;
+
+    @Column(name = "weather_wind_mph")
+    private Double weatherWindMph;
+
+    @Column(name = "weather_gust_mph")
+    private Double weatherGustMph;
+
+    @Column(name = "weather_conditions", length = 100)
+    private String weatherConditions;
+
+    @Column(name = "weather_visibility", length = 50)
+    private String weatherVisibility;
 
     @Column(name = "fly_score")
     private Integer flyScore;
 
-    @Column(name = "weather_summary", columnDefinition = "TEXT")
-    private String weatherSummary;
-
-    @Column(name = "duration_hours", precision = 4, scale = 2)
-    private BigDecimal durationHours;
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(length = 20)
+    private MissionStatus status = MissionStatus.PLANNED;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
 
+    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private Instant updatedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, insertable = false, updatable = false)
-    private User user;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", insertable = false, updatable = false)
-    private Client client;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "drone_profile_id", insertable = false, updatable = false)
-    private DroneProfile droneProfile;
-
-    @JsonIgnore
-    @Builder.Default
-    @OneToMany(mappedBy = "mission")
-    private List<LineItem> lineItems = new ArrayList<>();
-
-    @JsonIgnore
-    @Builder.Default
-    @OneToMany(mappedBy = "mission", cascade = jakarta.persistence.CascadeType.ALL)
-    private List<Deliverable> deliverables = new ArrayList<>();
-
-    @PrePersist
-    void prePersist() {
-        if (id == null || id.isBlank()) {
-            id = UUID.randomUUID().toString();
-        }
-        Instant now = Instant.now();
-        if (createdAt == null) {
-            createdAt = now;
-        }
-        if (updatedAt == null) {
-            updatedAt = now;
-        }
-        if (status == null || status.isBlank()) {
-            status = MissionStatus.PLANNED.name();
-        }
-    }
-
-    @PreUpdate
-    void preUpdate() {
-        updatedAt = Instant.now();
-    }
 }

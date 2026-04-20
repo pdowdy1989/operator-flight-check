@@ -1,0 +1,16 @@
+.mission-card { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); }
+.mission-card__header { display: flex; justify-content: space-between; align-items: flex-start; }
+.mission-card__date { font-weight: 600; color: var(--color-text); font-size: var(--text-sm); }
+.mission-card__drone { font-size: var(--text-xs); color: var(--color-text-muted); margin-top: 2px; }
+.mission-card__status { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: var(--radius-sm); text-transform: uppercase; letter-spacing: 0.04em; }
+.mission-card__status--planned { background: var(--color-surface); color: var(--color-text-muted); border: 1px solid var(--color-border); }
+.mission-card__status--in-progress { background: #1d4ed815; color: #3b82f6; border: 1px solid #3b82f640; }
+.mission-card__status--completed { background: #16a34a15; color: #22c55e; border: 1px solid #22c55e40; }
+.mission-card__status--aborted { background: #dc262615; color: #ef4444; border: 1px solid #ef444440; }
+.mission-card__weather { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); }
+.mission-card__score strong { color: var(--color-primary); }
+.mission-card__notes { font-size: var(--text-xs); color: var(--color-text-muted); margin: 0; }
+.mission-card__actions { display: flex; gap: var(--space-2); }
+.mission-card__btn { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-4); font-size: var(--text-xs); cursor: pointer; color: var(--color-text); }
+.mission-card__btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.mission-card__btn--danger:hover { border-color: #ef4444; color: #ef4444; }

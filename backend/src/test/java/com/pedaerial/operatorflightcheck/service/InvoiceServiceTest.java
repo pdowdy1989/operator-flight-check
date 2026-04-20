@@ -1,156 +1,159 @@
 package com.pedaerial.operatorflightcheck.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.pedaerial.operatorflightcheck.dto.InvoiceRequest;
 import com.pedaerial.operatorflightcheck.dto.InvoiceResponse;
 import com.pedaerial.operatorflightcheck.dto.LineItemRequest;
-import com.pedaerial.operatorflightcheck.entity.Client;
-import com.pedaerial.operatorflightcheck.entity.Invoice;
-import com.pedaerial.operatorflightcheck.entity.LineItem;
+import com.pedaerial.operatorflightcheck.entity.*;
 import com.pedaerial.operatorflightcheck.exception.BadRequestException;
+import com.pedaerial.operatorflightcheck.exception.UnauthorizedException;
 import com.pedaerial.operatorflightcheck.repository.InvoiceRepository;
-import com.pedaerial.operatorflightcheck.repository.LineItemRepository;
-import com.pedaerial.operatorflightcheck.repository.PaymentRepository;
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Optional;
+import com.pedaerial.operatorflightcheck.repository.JobRepository;
+import com.pedaerial.operatorflightcheck.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 @ExtendWith(MockitoExtension.class)
 class InvoiceServiceTest {
 
-    @Mock
-    private InvoiceRepository invoiceRepository;
+    @Mock InvoiceRepository invoiceRepository;
+    @Mock JobRepository jobRepository;
+    @Mock UserRepository userRepository;
+    @Mock ResponseMapper mapper;
 
-    @Mock
-    private LineItemRepository lineItemRepository;
+    @InjectMocks InvoiceService invoiceService;
 
-    @Mock
-    private PaymentRepository paymentRepository;
+    private User pilot;
+    private Client client;
+    private Job job;
 
-    @Mock
-    private ClientService clientService;
+    @BeforeEach
+    void setUp() {
+        pilot = new User();
+        pilot.setId(UUID.randomUUID().toString());
+        pilot.setRole(Role.PILOT);
 
-    @Mock
-    private MissionService missionService;
-
-    @InjectMocks
-    private InvoiceService invoiceService;
-
-    @Test
-    void testCreateInvoice_generatesInvoiceNumber() {
-        InvoiceRequest request = invoiceRequest();
-        when(clientService.getOwnedClient("user-1", "client-1")).thenReturn(Client.builder().id("client-1").name("Client").build());
-        when(invoiceRepository.findMaxInvoiceNumberByUserId("user-1")).thenReturn(Optional.of(7));
-        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(invocation -> {
-            Invoice invoice = invocation.getArgument(0);
-            invoice.setId("invoice-1");
-            return invoice;
-        });
-        when(lineItemRepository.save(any(LineItem.class))).thenAnswer(invocation -> {
-            LineItem item = invocation.getArgument(0);
-            item.setId("item-1");
-            return item;
-        });
-        when(invoiceRepository.findByIdAndUserId("invoice-1", "user-1")).thenReturn(Optional.of(
-            Invoice.builder().id("invoice-1").userId("user-1").clientId("client-1").invoiceNumber("INV-0008")
-                .issueDate(request.getIssueDate()).dueDate(request.getDueDate()).lineItems(new java.util.ArrayList<>()).payments(new java.util.ArrayList<>()).build()
-        ));
-        when(lineItemRepository.findByInvoiceIdOrderBySortOrderAsc("invoice-1")).thenReturn(List.of());
-        when(paymentRepository.findByInvoiceIdOrderByPaymentDateDesc("invoice-1")).thenReturn(List.of());
-
-        InvoiceResponse response = invoiceService.createInvoice("user-1", request);
-
-        assertThat(response.getInvoiceNumber()).isEqualTo("INV-0008");
-    }
-
-    @Test
-    void testCreateInvoice_createsLineItems() {
-        InvoiceRequest request = invoiceRequest();
-        when(clientService.getOwnedClient("user-1", "client-1")).thenReturn(Client.builder().id("client-1").build());
-        when(invoiceRepository.findMaxInvoiceNumberByUserId("user-1")).thenReturn(Optional.empty());
-        when(invoiceRepository.save(any(Invoice.class))).thenAnswer(invocation -> {
-            Invoice invoice = invocation.getArgument(0);
-            invoice.setId("invoice-1");
-            return invoice;
-        });
-        when(lineItemRepository.save(any(LineItem.class))).thenAnswer(invocation -> invocation.getArgument(0));
-        when(invoiceRepository.findByIdAndUserId("invoice-1", "user-1")).thenReturn(Optional.of(
-            Invoice.builder().id("invoice-1").userId("user-1").clientId("client-1").invoiceNumber("INV-0001")
-                .issueDate(request.getIssueDate()).dueDate(request.getDueDate()).lineItems(new java.util.ArrayList<>()).payments(new java.util.ArrayList<>()).build()
-        ));
-        when(lineItemRepository.findByInvoiceIdOrderBySortOrderAsc("invoice-1")).thenReturn(List.of(LineItem.builder()
-            .id("item-1").invoiceId("invoice-1").description("Shoot").quantity(new BigDecimal("1.00")).unitPrice(new BigDecimal("100.00")).amount(new BigDecimal("100.00")).sortOrder(0).build()));
-        when(paymentRepository.findByInvoiceIdOrderByPaymentDateDesc("invoice-1")).thenReturn(List.of());
-
-        InvoiceResponse response = invoiceService.createInvoice("user-1", request);
-
-        assertThat(response.getLineItems()).hasSize(1);
-    }
-
-    @Test
-    void testUpdateInvoice_draftOnly_throwsOnSent() {
-        Invoice invoice = Invoice.builder().id("invoice-1").userId("user-1").status("SENT").lineItems(new java.util.ArrayList<>()).payments(new java.util.ArrayList<>()).build();
-        when(invoiceRepository.findByIdAndUserId("invoice-1", "user-1")).thenReturn(Optional.of(invoice));
-
-        assertThatThrownBy(() -> invoiceService.updateInvoice("user-1", "invoice-1", invoiceRequest()))
-            .isInstanceOf(BadRequestException.class)
-            .hasMessage("Only draft invoices can be edited");
-    }
-
-    @Test
-    void testUpdateInvoiceStatus_validTransition() {
-        Invoice invoice = Invoice.builder().id("invoice-1").userId("user-1").status("DRAFT").lineItems(new java.util.ArrayList<>()).payments(new java.util.ArrayList<>()).build();
-        when(invoiceRepository.findByIdAndUserId("invoice-1", "user-1")).thenReturn(Optional.of(invoice));
-        when(invoiceRepository.save(invoice)).thenReturn(invoice);
-        when(lineItemRepository.findByInvoiceIdOrderBySortOrderAsc("invoice-1")).thenReturn(List.of());
-        when(paymentRepository.findByInvoiceIdOrderByPaymentDateDesc("invoice-1")).thenReturn(List.of());
-
-        InvoiceResponse response = invoiceService.updateInvoiceStatus("user-1", "invoice-1", "SENT");
-
-        assertThat(response.getStatus()).isEqualTo("SENT");
-    }
-
-    @Test
-    void testUpdateInvoiceStatus_invalidTransition_throws() {
-        Invoice invoice = Invoice.builder().id("invoice-1").userId("user-1").status("DRAFT").lineItems(new java.util.ArrayList<>()).payments(new java.util.ArrayList<>()).build();
-        when(invoiceRepository.findByIdAndUserId("invoice-1", "user-1")).thenReturn(Optional.of(invoice));
-
-        assertThatThrownBy(() -> invoiceService.updateInvoiceStatus("user-1", "invoice-1", "PAID"))
-            .isInstanceOf(BadRequestException.class)
-            .hasMessageContaining("Invalid status transition");
-    }
-
-    @Test
-    void testDeleteInvoice_draftOnly_throwsOnSent() {
-        Invoice invoice = Invoice.builder().id("invoice-1").userId("user-1").status("SENT").lineItems(new java.util.ArrayList<>()).payments(new java.util.ArrayList<>()).build();
-        when(invoiceRepository.findByIdAndUserId("invoice-1", "user-1")).thenReturn(Optional.of(invoice));
-
-        assertThatThrownBy(() -> invoiceService.deleteInvoice("user-1", "invoice-1"))
-            .isInstanceOf(BadRequestException.class)
-            .hasMessage("Only draft invoices can be deleted");
-    }
-
-    private InvoiceRequest invoiceRequest() {
-        return InvoiceRequest.builder()
-            .clientId("client-1")
-            .issueDate(LocalDate.now())
-            .dueDate(LocalDate.now().plusDays(7))
-            .lineItems(List.of(LineItemRequest.builder()
-                .description("Shoot")
-                .quantity(new BigDecimal("1.00"))
-                .unitPrice(new BigDecimal("100.00"))
-                .build()))
+        client = Client.builder()
+            .id(UUID.randomUUID())
+            .pilot(pilot)
+            .name("Test Client")
+            .clientType(ClientType.INDIVIDUAL)
             .build();
+
+        job = Job.builder()
+            .id(UUID.randomUUID())
+            .pilot(pilot)
+            .client(client)
+            .title("Roof Survey")
+            .status(JobStatus.COMPLETED)
+            .jobType(JobType.ROOF_SURVEY)
+            .siteAddress("123 Main St")
+            .build();
+    }
+
+    @Test
+    void createInvoice_calculatesTotal() {
+        List<LineItemRequest> lineItems = List.of(
+            new LineItemRequest("Flight fee", new BigDecimal("2"), new BigDecimal("150.00"), 0),
+            new LineItemRequest("Report", BigDecimal.ONE, new BigDecimal("75.00"), 1)
+        );
+        InvoiceRequest request = new InvoiceRequest(job.getId(), new BigDecimal("20.00"), null, null, lineItems);
+
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(userRepository.findById(pilot.getId())).thenReturn(Optional.of(pilot));
+        when(invoiceRepository.findMaxInvoiceNumberForPrefix(any())).thenReturn(0);
+        when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(mapper.toInvoiceResponse(any())).thenReturn(mock(InvoiceResponse.class));
+
+        invoiceService.createInvoice(request, pilot.getId());
+
+        verify(invoiceRepository).save(argThat(inv ->
+            inv.getAmount().compareTo(new BigDecimal("375.00")) == 0 &&
+            inv.getTotalAmount().compareTo(new BigDecimal("395.00")) == 0
+        ));
+    }
+
+    @Test
+    void createInvoice_autoNumberFormat() {
+        List<LineItemRequest> lineItems = List.of(
+            new LineItemRequest("Flight", BigDecimal.ONE, new BigDecimal("200.00"), 0)
+        );
+        InvoiceRequest request = new InvoiceRequest(job.getId(), null, null, null, lineItems);
+
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(userRepository.findById(pilot.getId())).thenReturn(Optional.of(pilot));
+        when(invoiceRepository.findMaxInvoiceNumberForPrefix(any())).thenReturn(5);
+        when(invoiceRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+        when(mapper.toInvoiceResponse(any())).thenReturn(mock(InvoiceResponse.class));
+
+        invoiceService.createInvoice(request, pilot.getId());
+
+        int year = java.time.LocalDate.now().getYear();
+        verify(invoiceRepository).save(argThat(inv ->
+            inv.getInvoiceNumber().equals("PED-" + year + "-0006")
+        ));
+    }
+
+    @Test
+    void createInvoice_noLineItems_throws() {
+        InvoiceRequest request = new InvoiceRequest(job.getId(), null, null, null, List.of());
+
+        when(jobRepository.findById(job.getId())).thenReturn(Optional.of(job));
+        when(userRepository.findById(pilot.getId())).thenReturn(Optional.of(pilot));
+
+        assertThatThrownBy(() -> invoiceService.createInvoice(request, pilot.getId()))
+            .isInstanceOf(BadRequestException.class);
+    }
+
+    @Test
+    void deleteInvoice_paidInvoice_throws() {
+        Invoice invoice = Invoice.builder()
+            .id(UUID.randomUUID())
+            .pilot(pilot)
+            .job(job)
+            .client(client)
+            .invoiceNumber("PED-2026-0001")
+            .amount(BigDecimal.TEN)
+            .totalAmount(BigDecimal.TEN)
+            .status(InvoiceStatus.PAID)
+            .build();
+
+        when(invoiceRepository.findById(invoice.getId())).thenReturn(Optional.of(invoice));
+
+        assertThatThrownBy(() -> invoiceService.deleteInvoice(invoice.getId(), pilot.getId()))
+            .isInstanceOf(BadRequestException.class)
+            .hasMessageContaining("paid");
+    }
+
+    @Test
+    void deleteInvoice_wrongOwner_throws() {
+        String otherPilotId = UUID.randomUUID().toString();
+        Invoice invoice = Invoice.builder()
+            .id(UUID.randomUUID())
+            .pilot(pilot)
+            .job(job)
+            .client(client)
+            .invoiceNumber("PED-2026-0001")
+            .amount(BigDecimal.TEN)
+            .totalAmount(BigDecimal.TEN)
+            .status(InvoiceStatus.DRAFT)
+            .build();
+
+        when(invoiceRepository.findById(invoice.getId())).thenReturn(Optional.of(invoice));
+
+        assertThatThrownBy(() -> invoiceService.deleteInvoice(invoice.getId(), otherPilotId))
+            .isInstanceOf(UnauthorizedException.class);
     }
 }

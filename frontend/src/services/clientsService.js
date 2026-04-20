@@ -1,19 +1,7 @@
-import { apiClient } from "./apiClient";
+import apiClient from './apiClient';
 
-export const clientsService = {
-  getAll() {
-    return apiClient.get("/clients").then((response) => response.data);
-  },
-  search(query) {
-    return apiClient.get(`/clients/search?q=${encodeURIComponent(query)}`).then((response) => response.data);
-  },
-  create(payload) {
-    return apiClient.post("/clients", payload).then((response) => response.data);
-  },
-  update(id, payload) {
-    return apiClient.put(`/clients/${id}`, payload).then((response) => response.data);
-  },
-  remove(id) {
-    return apiClient.delete(`/clients/${id}`);
-  },
-};
+export const getClients = () => apiClient.get('/clients');
+export const getClient = (id) => apiClient.get(`/clients/${id}`);
+export const createClient = (data) => apiClient.post('/clients', data);
+export const updateClient = (id, data) => apiClient.put(`/clients/${id}`, data);
+export const deleteClient = (id) => apiClient.delete(`/clients/${id}`);

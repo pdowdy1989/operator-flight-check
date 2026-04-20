@@ -2,185 +2,180 @@ package com.pedaerial.operatorflightcheck.service;
 
 import com.pedaerial.operatorflightcheck.dto.InvoiceRequest;
 import com.pedaerial.operatorflightcheck.dto.InvoiceResponse;
-import com.pedaerial.operatorflightcheck.dto.LineItemRequest;
-import com.pedaerial.operatorflightcheck.entity.Invoice;
-import com.pedaerial.operatorflightcheck.entity.InvoiceStatus;
-import com.pedaerial.operatorflightcheck.entity.LineItem;
-import com.pedaerial.operatorflightcheck.entity.Mission;
-import com.pedaerial.operatorflightcheck.entity.Payment;
+import com.pedaerial.operatorflightcheck.entity.*;
 import com.pedaerial.operatorflightcheck.exception.BadRequestException;
 import com.pedaerial.operatorflightcheck.exception.ResourceNotFoundException;
+import com.pedaerial.operatorflightcheck.exception.UnauthorizedException;
+import com.pedaerial.operatorflightcheck.repository.ClientRepository;
 import com.pedaerial.operatorflightcheck.repository.InvoiceRepository;
-import com.pedaerial.operatorflightcheck.repository.LineItemRepository;
-import com.pedaerial.operatorflightcheck.repository.PaymentRepository;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import com.pedaerial.operatorflightcheck.repository.JobRepository;
+import com.pedaerial.operatorflightcheck.repository.UserRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
 @Service
+@Transactional
 public class InvoiceService {
 
     private final InvoiceRepository invoiceRepository;
-    private final LineItemRepository lineItemRepository;
-    private final PaymentRepository paymentRepository;
-    private final ClientService clientService;
-    private final MissionService missionService;
+    private final JobRepository jobRepository;
+    private final UserRepository userRepository;
+    private final ClientRepository clientRepository;
+    private final ResponseMapper mapper;
 
-    public InvoiceService(
-        InvoiceRepository invoiceRepository,
-        LineItemRepository lineItemRepository,
-        PaymentRepository paymentRepository,
-        ClientService clientService,
-        MissionService missionService
-    ) {
+    public InvoiceService(InvoiceRepository invoiceRepository, JobRepository jobRepository,
+                          UserRepository userRepository, ClientRepository clientRepository,
+                          ResponseMapper mapper) {
         this.invoiceRepository = invoiceRepository;
-        this.lineItemRepository = lineItemRepository;
-        this.paymentRepository = paymentRepository;
-        this.clientService = clientService;
-        this.missionService = missionService;
+        this.jobRepository = jobRepository;
+        this.userRepository = userRepository;
+        this.clientRepository = clientRepository;
+        this.mapper = mapper;
     }
 
-    @Transactional
-    public InvoiceResponse createInvoice(String userId, InvoiceRequest req) {
-        clientService.getOwnedClient(userId, req.getClientId());
+    public InvoiceResponse createInvoice(InvoiceRequest request, String pilotId) {
+        Job job = jobRepository.findById(request.jobId())
+            .orElseThrow(() -> new ResourceNotFoundException("Job not found: " + request.jobId()));
+
+        User pilot = userRepository.findById(pilotId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + pilotId));
+
+        if (request.lineItems() == null || request.lineItems().isEmpty()) {
+            throw new BadRequestException("At least one line item is required.");
+        }
+
+        String invoiceNumber = generateInvoiceNumber();
+        BigDecimal taxAmount = request.taxAmount() != null ? request.taxAmount() : BigDecimal.ZERO;
+
         Invoice invoice = Invoice.builder()
-            .userId(userId)
-            .clientId(req.getClientId())
-            .invoiceNumber(nextInvoiceNumber(userId))
-            .status(InvoiceStatus.DRAFT.name())
-            .issueDate(req.getIssueDate())
-            .dueDate(req.getDueDate())
-            .notes(req.getNotes())
+            .job(job)
+            .pilot(pilot)
+            .invoiceNumber(invoiceNumber)
+            .client(job.getClient())
+            .taxAmount(taxAmount)
+            .status(InvoiceStatus.DRAFT)
+            .dueDate(request.dueDate())
+            .notes(request.notes())
+            .lineItems(new ArrayList<>())
             .build();
-        Invoice savedInvoice = invoiceRepository.save(invoice);
-        replaceLineItems(userId, savedInvoice, req.getLineItems());
-        return getInvoiceById(userId, savedInvoice.getId());
-    }
 
-    @Transactional(readOnly = true)
-    public Page<InvoiceResponse> getInvoices(String userId, Pageable pageable) {
-        return invoiceRepository.findByUserIdOrderByCreatedAtDesc(userId, pageable)
-            .map(this::toInvoiceResponse);
-    }
+        // Build line items and calculate totals
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (int i = 0; i < request.lineItems().size(); i++) {
+            var li = request.lineItems().get(i);
+            BigDecimal amount = li.quantity().multiply(li.unitPrice());
+            subtotal = subtotal.add(amount);
 
-    @Transactional(readOnly = true)
-    public InvoiceResponse getInvoiceById(String userId, String invoiceId) {
-        return toInvoiceResponse(getOwnedInvoice(userId, invoiceId));
-    }
-
-    @Transactional(readOnly = true)
-    public List<InvoiceResponse> getInvoicesByClient(String userId, String clientId) {
-        clientService.getOwnedClient(userId, clientId);
-        return invoiceRepository.findByUserIdAndClientId(userId, clientId).stream()
-            .map(this::toInvoiceResponse)
-            .toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<InvoiceResponse> getInvoicesByStatus(String userId, String status) {
-        String normalized = normalizeInvoiceStatus(status);
-        return invoiceRepository.findByUserIdAndStatus(userId, normalized).stream()
-            .map(this::toInvoiceResponse)
-            .toList();
-    }
-
-    @Transactional
-    public InvoiceResponse updateInvoice(String userId, String invoiceId, InvoiceRequest req) {
-        Invoice invoice = getOwnedInvoice(userId, invoiceId);
-        if (!InvoiceStatus.DRAFT.name().equals(invoice.getStatus())) {
-            throw new BadRequestException("Only draft invoices can be edited");
+            LineItem lineItem = LineItem.builder()
+                .invoice(invoice)
+                .description(li.description())
+                .quantity(li.quantity())
+                .unitPrice(li.unitPrice())
+                .amount(amount)
+                .sortOrder(li.sortOrder() != null ? li.sortOrder() : i)
+                .build();
+            invoice.getLineItems().add(lineItem);
         }
-        clientService.getOwnedClient(userId, req.getClientId());
-        invoice.setClientId(req.getClientId());
-        invoice.setIssueDate(req.getIssueDate());
-        invoice.setDueDate(req.getDueDate());
-        invoice.setNotes(req.getNotes());
-        invoiceRepository.save(invoice);
-        replaceLineItems(userId, invoice, req.getLineItems());
-        return getInvoiceById(userId, invoiceId);
+
+        invoice.setAmount(subtotal);
+        invoice.setTotalAmount(subtotal.add(taxAmount));
+
+        return mapper.toInvoiceResponse(invoiceRepository.save(invoice));
     }
 
-    @Transactional
-    public InvoiceResponse updateInvoiceStatus(String userId, String invoiceId, String newStatus) {
-        Invoice invoice = getOwnedInvoice(userId, invoiceId);
-        String normalized = normalizeInvoiceStatus(newStatus);
-        String current = invoice.getStatus();
-        if (InvoiceStatus.PAID.name().equals(current)) {
-            throw new BadRequestException("Paid invoices cannot be modified");
+    public InvoiceResponse updateInvoiceStatus(UUID invoiceId, InvoiceStatus newStatus, String requesterId) {
+        Invoice invoice = findInvoiceOwned(invoiceId, requesterId);
+        invoice.setStatus(newStatus);
+        if (newStatus == InvoiceStatus.PAID) {
+            invoice.setPaidDate(LocalDate.now());
         }
-        if (!isValidTransition(current, normalized)) {
-            throw new BadRequestException("Invalid status transition from " + current + " to " + normalized);
-        }
-        invoice.setStatus(normalized);
-        return getInvoiceById(userId, invoiceRepository.save(invoice).getId());
+        return mapper.toInvoiceResponse(invoiceRepository.save(invoice));
     }
 
-    @Transactional
-    public void deleteInvoice(String userId, String invoiceId) {
-        Invoice invoice = getOwnedInvoice(userId, invoiceId);
-        if (!InvoiceStatus.DRAFT.name().equals(invoice.getStatus())) {
-            throw new BadRequestException("Only draft invoices can be deleted");
+    @Transactional(readOnly = true)
+    public List<InvoiceResponse> getInvoicesForPilot(String pilotId) {
+        return invoiceRepository.findByPilotIdOrderByCreatedAtDesc(pilotId)
+            .stream().map(mapper::toInvoiceResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<InvoiceResponse> getInvoicesForClient(UUID clientId) {
+        return invoiceRepository.findByClientIdOrderByCreatedAtDesc(clientId)
+            .stream().map(mapper::toInvoiceResponse).toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<InvoiceResponse> getInvoicesForClientUser(String userId) {
+        Client client = resolveClientForUser(userId);
+        return getInvoicesForClient(client.getId());
+    }
+
+    @Transactional(readOnly = true)
+    public InvoiceResponse getInvoice(UUID invoiceId, String requesterId) {
+        Invoice invoice = findInvoiceAccessible(invoiceId, requesterId);
+        return mapper.toInvoiceResponse(invoice);
+    }
+
+    @Transactional(readOnly = true)
+    public InvoiceResponse getInvoiceByJob(UUID jobId) {
+        Invoice invoice = invoiceRepository.findByJobId(jobId)
+            .orElseThrow(() -> new ResourceNotFoundException("Invoice not found for job: " + jobId));
+        return mapper.toInvoiceResponse(invoice);
+    }
+
+    public void deleteInvoice(UUID invoiceId, String requesterId) {
+        Invoice invoice = findInvoiceOwned(invoiceId, requesterId);
+        if (invoice.getStatus() == InvoiceStatus.PAID) {
+            throw new BadRequestException("Cannot delete a paid invoice.");
         }
         invoiceRepository.delete(invoice);
     }
 
-    @Transactional(readOnly = true)
-    protected Invoice getOwnedInvoice(String userId, String invoiceId) {
-        return invoiceRepository.findByIdAndUserId(invoiceId, userId)
+    private Invoice findInvoiceOwned(UUID invoiceId, String requesterId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
             .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + invoiceId));
-    }
-
-    @Transactional(readOnly = true)
-    protected InvoiceResponse toInvoiceResponse(Invoice invoice) {
-        List<LineItem> lineItems = lineItemRepository.findByInvoiceIdOrderBySortOrderAsc(invoice.getId());
-        List<Payment> payments = paymentRepository.findByInvoiceIdOrderByPaymentDateDesc(invoice.getId());
-        invoice.setLineItems(new ArrayList<>(lineItems));
-        invoice.setPayments(new ArrayList<>(payments));
-        return ResponseMapper.toInvoiceResponse(invoice, lineItems, payments);
-    }
-
-    private void replaceLineItems(String userId, Invoice invoice, List<LineItemRequest> requests) {
-        lineItemRepository.deleteByInvoiceId(invoice.getId());
-        invoice.getLineItems().clear();
-        int sortOrder = 0;
-        for (LineItemRequest request : requests) {
-            Mission mission = null;
-            if (request.getMissionId() != null && !request.getMissionId().isBlank()) {
-                mission = missionService.getOwnedMission(userId, request.getMissionId());
-            }
-            LineItem lineItem = LineItem.builder()
-                .invoiceId(invoice.getId())
-                .missionId(mission != null ? mission.getId() : null)
-                .description(request.getDescription())
-                .quantity(request.getQuantity())
-                .unitPrice(request.getUnitPrice())
-                .sortOrder(sortOrder++)
-                .build();
-            invoice.getLineItems().add(lineItemRepository.save(lineItem));
+        if (!invoice.getPilot().getId().equals(requesterId)) {
+            throw new UnauthorizedException("Access denied.");
         }
+        return invoice;
     }
 
-    private String nextInvoiceNumber(String userId) {
-        int next = invoiceRepository.findMaxInvoiceNumberByUserId(userId).orElse(0) + 1;
-        return String.format(Locale.US, "INV-%04d", next);
-    }
+    private Invoice findInvoiceAccessible(UUID invoiceId, String requesterId) {
+        Invoice invoice = invoiceRepository.findById(invoiceId)
+            .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + invoiceId));
 
-    private boolean isValidTransition(String current, String target) {
-        return (InvoiceStatus.DRAFT.name().equals(current) && InvoiceStatus.SENT.name().equals(target))
-            || (InvoiceStatus.SENT.name().equals(current) && InvoiceStatus.PAID.name().equals(target))
-            || (InvoiceStatus.SENT.name().equals(current) && InvoiceStatus.OVERDUE.name().equals(target));
-    }
+        User requester = userRepository.findById(requesterId).orElse(null);
+        boolean isPilot = invoice.getPilot() != null && invoice.getPilot().getId().equals(requesterId);
+        boolean isClient = requester != null
+            && requester.getRole() == Role.CLIENT
+            && invoice.getClient() != null
+            && invoice.getClient().getEmail() != null
+            && invoice.getClient().getEmail().equalsIgnoreCase(requester.getEmail());
+        boolean isAdmin = requester != null && requester.getRole() == Role.ADMIN;
 
-    private String normalizeInvoiceStatus(String status) {
-        try {
-            return InvoiceStatus.valueOf(status.trim().toUpperCase(Locale.US)).name();
-        } catch (Exception ex) {
-            throw new BadRequestException("Invalid invoice status: " + status);
+        if (!isPilot && !isClient && !isAdmin) {
+            throw new UnauthorizedException("Access denied.");
         }
+        return invoice;
+    }
+
+    private Client resolveClientForUser(String userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+        return clientRepository.findByEmailIgnoreCase(user.getEmail())
+            .orElseThrow(() -> new ResourceNotFoundException("Client profile not found for: " + user.getEmail()));
+    }
+
+    private String generateInvoiceNumber() {
+        int year = LocalDate.now().getYear();
+        String prefix = "PED-" + year + "-";
+        int maxNum = invoiceRepository.findMaxInvoiceNumberForPrefix(prefix);
+        return prefix + String.format("%04d", maxNum + 1);
     }
 }

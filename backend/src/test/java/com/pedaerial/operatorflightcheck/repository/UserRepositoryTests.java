@@ -7,8 +7,10 @@ import com.pedaerial.operatorflightcheck.entity.User;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.ActiveProfiles;
 
 @DataJpaTest
+@ActiveProfiles("test")
 class UserRepositoryTests {
 
     @Autowired
@@ -19,7 +21,7 @@ class UserRepositoryTests {
         User user = new User();
         user.setEmail("pilot@pedaerial.com");
         user.setPasswordHash("hashed-password");
-        user.setRole(Role.USER);
+        user.setRole(Role.PILOT);
 
         userRepository.save(user);
 
@@ -27,7 +29,7 @@ class UserRepositoryTests {
             .isPresent()
             .get()
             .extracting(User::getEmail, User::getRole)
-            .containsExactly("pilot@pedaerial.com", Role.USER);
+            .containsExactly("pilot@pedaerial.com", Role.PILOT);
     }
 
     @Test

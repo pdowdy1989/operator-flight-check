@@ -5,11 +5,14 @@ import com.pedaerial.operatorflightcheck.dto.DroneProfileResponse;
 import com.pedaerial.operatorflightcheck.entity.DroneProfile;
 import com.pedaerial.operatorflightcheck.entity.User;
 import com.pedaerial.operatorflightcheck.exception.ResourceNotFoundException;
+import com.pedaerial.operatorflightcheck.exception.UnauthorizedException;
 import com.pedaerial.operatorflightcheck.repository.DroneProfileRepository;
 import com.pedaerial.operatorflightcheck.repository.UserRepository;
-import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.UUID;
 
 @Service
 @Transactional
@@ -17,76 +20,81 @@ public class DroneProfileService {
 
     private final DroneProfileRepository droneProfileRepository;
     private final UserRepository userRepository;
+    private final ResponseMapper mapper;
 
-    public DroneProfileService(DroneProfileRepository droneProfileRepository, UserRepository userRepository) {
+    public DroneProfileService(DroneProfileRepository droneProfileRepository, UserRepository userRepository, ResponseMapper mapper) {
         this.droneProfileRepository = droneProfileRepository;
         this.userRepository = userRepository;
+        this.mapper = mapper;
+    }
+
+    public DroneProfileResponse createDroneProfile(DroneProfileRequest request, String pilotId) {
+        User pilot = userRepository.findById(pilotId)
+            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + pilotId));
+
+        DroneProfile drone = DroneProfile.builder()
+            .pilot(pilot)
+            .name(request.name())
+            .manufacturer(request.manufacturer())
+            .model(request.model())
+            .serialNumber(request.serialNumber())
+            .faaRegistration(request.faaRegistration())
+            .weightGrams(request.weightGrams())
+            .maxWindMph(request.maxWindMph() != null ? request.maxWindMph() : 20)
+            .maxGustMph(request.maxGustMph() != null ? request.maxGustMph() : 25)
+            .notes(request.notes())
+            .active(request.active() != null ? request.active() : true)
+            .build();
+
+        return mapper.toDroneProfileResponse(droneProfileRepository.save(drone));
     }
 
     @Transactional(readOnly = true)
-    public List<DroneProfileResponse> getProfilesForUser(String userId) {
-        return droneProfileRepository.findByUserId(userId)
-            .stream()
-            .map(this::toResponse)
-            .toList();
+    public List<DroneProfileResponse> getDronesForPilot(String pilotId) {
+        return droneProfileRepository.findByPilotIdOrderByNameAsc(pilotId)
+            .stream().map(mapper::toDroneProfileResponse).toList();
     }
 
     @Transactional(readOnly = true)
-    public DroneProfileResponse getProfileById(String userId, String profileId) {
-        return toResponse(getOwnedProfile(userId, profileId));
+    public List<DroneProfileResponse> getActiveDronesForPilot(String pilotId) {
+        return droneProfileRepository.findByPilotIdAndActiveTrue(pilotId)
+            .stream().map(mapper::toDroneProfileResponse).toList();
     }
 
-    public DroneProfileResponse createProfile(String userId, DroneProfileRequest request) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
-
-        DroneProfile profile = new DroneProfile();
-        profile.setUser(user);
-        applyRequest(profile, request);
-
-        return toResponse(droneProfileRepository.save(profile));
+    @Transactional(readOnly = true)
+    public DroneProfileResponse getDrone(UUID droneId, String requesterId) {
+        DroneProfile drone = findDroneOwned(droneId, requesterId);
+        return mapper.toDroneProfileResponse(drone);
     }
 
-    public DroneProfileResponse updateProfile(String userId, String profileId, DroneProfileRequest request) {
-        DroneProfile profile = getOwnedProfile(userId, profileId);
-        applyRequest(profile, request);
-        return toResponse(droneProfileRepository.save(profile));
+    public DroneProfileResponse updateDrone(UUID droneId, DroneProfileRequest request, String requesterId) {
+        DroneProfile drone = findDroneOwned(droneId, requesterId);
+
+        drone.setName(request.name());
+        drone.setManufacturer(request.manufacturer());
+        drone.setModel(request.model());
+        drone.setSerialNumber(request.serialNumber());
+        drone.setFaaRegistration(request.faaRegistration());
+        drone.setWeightGrams(request.weightGrams());
+        if (request.maxWindMph() != null) drone.setMaxWindMph(request.maxWindMph());
+        if (request.maxGustMph() != null) drone.setMaxGustMph(request.maxGustMph());
+        drone.setNotes(request.notes());
+        if (request.active() != null) drone.setActive(request.active());
+
+        return mapper.toDroneProfileResponse(droneProfileRepository.save(drone));
     }
 
-    public void deleteProfile(String userId, String profileId) {
-        DroneProfile profile = getOwnedProfile(userId, profileId);
-        droneProfileRepository.delete(profile);
+    public void deleteDrone(UUID droneId, String requesterId) {
+        DroneProfile drone = findDroneOwned(droneId, requesterId);
+        droneProfileRepository.delete(drone);
     }
 
-    public DroneProfile getOwnedProfile(String userId, String profileId) {
-        return droneProfileRepository.findByIdAndUserId(profileId, userId)
-            .orElseThrow(() -> new ResourceNotFoundException("Drone profile not found: " + profileId));
-    }
-
-    private void applyRequest(DroneProfile profile, DroneProfileRequest request) {
-        profile.setName(request.getName());
-        profile.setType(request.getType());
-        profile.setWindGreenMph(request.getWindGreenMph());
-        profile.setWindYellowMph(request.getWindYellowMph());
-        profile.setGustGreenMph(request.getGustGreenMph());
-        profile.setGustYellowMph(request.getGustYellowMph());
-        profile.setPrecipGreenPct(request.getPrecipGreenPct());
-        profile.setPrecipYellowPct(request.getPrecipYellowPct());
-    }
-
-    private DroneProfileResponse toResponse(DroneProfile profile) {
-        return new DroneProfileResponse(
-            profile.getId(),
-            profile.getUser().getId(),
-            profile.getName(),
-            profile.getType(),
-            profile.getWindGreenMph(),
-            profile.getWindYellowMph(),
-            profile.getGustGreenMph(),
-            profile.getGustYellowMph(),
-            profile.getPrecipGreenPct(),
-            profile.getPrecipYellowPct(),
-            profile.getCreatedAt()
-        );
+    private DroneProfile findDroneOwned(UUID droneId, String requesterId) {
+        DroneProfile drone = droneProfileRepository.findById(droneId)
+            .orElseThrow(() -> new ResourceNotFoundException("Drone profile not found: " + droneId));
+        if (!drone.getPilot().getId().equals(requesterId)) {
+            throw new UnauthorizedException("Access denied.");
+        }
+        return drone;
     }
 }

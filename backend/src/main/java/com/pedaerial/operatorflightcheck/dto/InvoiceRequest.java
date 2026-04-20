@@ -1,33 +1,20 @@
 package com.pedaerial.operatorflightcheck.dto;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class InvoiceRequest {
-    @NotBlank
-    private String clientId;
+public record InvoiceRequest(
+    @NotNull(message = "Job ID is required.")
+    UUID jobId,
 
-    @NotNull
-    private LocalDate issueDate;
+    BigDecimal taxAmount,
+    LocalDate dueDate,
+    String notes,
 
-    @NotNull
-    private LocalDate dueDate;
-
-    private String notes;
-
-    @Valid
-    @NotEmpty
-    private List<LineItemRequest> lineItems;
-}
+    @NotNull(message = "At least one line item is required.")
+    List<LineItemRequest> lineItems
+) {}

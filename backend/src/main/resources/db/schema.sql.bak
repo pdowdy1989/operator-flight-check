@@ -1,0 +1,4 @@
+CREATE DATABASE IF NOT EXISTS operator_flight_check;
+USE operator_flight_check;
+
+SOURCE schema.sql;

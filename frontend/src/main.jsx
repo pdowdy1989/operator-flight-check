@@ -2,28 +2,29 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import App from "./App";
-import { FlightDataProvider } from "./context/FlightDataContext";
-import { LocationProvider } from "./context/LocationContext";
 import { AuthProvider } from "./context/AuthContext";
-import { ProfileProvider } from "./context/ProfileContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import { ToastProvider } from "./context/ToastContext";
+import { JobProvider } from "./context/JobContext";
+import { DocumentProvider } from "./context/DocumentContext";
 import "leaflet/dist/leaflet.css";
+import "./styles/global.css";
 import "./index.css";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
-    <AuthProvider>
-      <LocationProvider>
-        <ProfileProvider>
-          <FlightDataProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <JobProvider>
+          <DocumentProvider>
             <ToastProvider>
               <BrowserRouter>
                 <App />
               </BrowserRouter>
             </ToastProvider>
-          </FlightDataProvider>
-        </ProfileProvider>
-      </LocationProvider>
-    </AuthProvider>
+          </DocumentProvider>
+        </JobProvider>
+      </AuthProvider>
+    </ThemeProvider>
   </React.StrictMode>
 );

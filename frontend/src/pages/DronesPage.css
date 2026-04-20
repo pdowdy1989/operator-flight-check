@@ -1,0 +1,16 @@
+.drones-page__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); font-size: var(--text-sm); color: var(--color-text-muted); }
+.drones-page__btn { background: var(--color-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-4); font-size: var(--text-sm); font-weight: 600; cursor: pointer; }
+.drones-page__form { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-5); margin-bottom: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); }
+.drones-page__grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.drones-page__grid input { background: var(--color-surface); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: var(--space-2) var(--space-3); color: var(--color-text); font-size: var(--text-sm); }
+.drones-page__save-btn { background: var(--color-primary); color: white; border: none; border-radius: var(--radius-sm); padding: var(--space-2) var(--space-5); font-size: var(--text-sm); font-weight: 600; cursor: pointer; align-self: flex-end; }
+.drones-page__list { display: flex; flex-direction: column; gap: var(--space-3); }
+.drone-card { background: var(--color-surface-raised); border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: var(--space-4); }
+.drone-card--inactive { opacity: 0.6; }
+.drone-card__header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-2); }
+.drone-card__name { font-weight: 600; color: var(--color-text); font-size: var(--text-sm); }
+.drone-card__model { font-size: var(--text-xs); color: var(--color-text-muted); }
+.drone-card__inactive { font-size: var(--text-xs); color: var(--color-text-muted); border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 1px 6px; }
+.drone-card__meta { display: flex; flex-wrap: wrap; gap: var(--space-3); font-size: var(--text-xs); color: var(--color-text-muted); margin-bottom: var(--space-3); }
+.drone-card__delete { background: none; border: 1px solid var(--color-border); border-radius: var(--radius-sm); padding: 2px 10px; font-size: var(--text-xs); color: var(--color-text-muted); cursor: pointer; }
+.drone-card__delete:hover { border-color: #ef4444; color: #ef4444; }

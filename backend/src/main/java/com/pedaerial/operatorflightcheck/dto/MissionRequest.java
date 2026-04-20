@@ -1,37 +1,20 @@
 package com.pedaerial.operatorflightcheck.dto;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import java.math.BigDecimal;
+
 import java.time.LocalDate;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.time.LocalTime;
+import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class MissionRequest {
-    private String clientId;
-    private String droneProfileId;
+public record MissionRequest(
+    @NotNull(message = "Job ID is required.")
+    UUID jobId,
 
-    @NotBlank
-    private String title;
+    UUID droneProfileId,
 
-    private String description;
-    private String locationLabel;
-    private String locationAddress;
-    private BigDecimal locationLat;
-    private BigDecimal locationLon;
+    @NotNull(message = "Flight date is required.")
+    LocalDate flightDate,
 
-    @NotNull
-    private LocalDate missionDate;
-
-    private String status;
-    private Integer flyScore;
-    private String weatherSummary;
-    private BigDecimal durationHours;
-    private String notes;
-}
+    LocalTime flightTime,
+    String notes
+) {}

@@ -1,28 +1,19 @@
 package com.pedaerial.operatorflightcheck.repository;
 
 import com.pedaerial.operatorflightcheck.entity.Invoice;
-import java.util.List;
-import java.util.Optional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-public interface InvoiceRepository extends JpaRepository<Invoice, String> {
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
 
-    Page<Invoice> findByUserIdOrderByCreatedAtDesc(String userId, Pageable pageable);
+public interface InvoiceRepository extends JpaRepository<Invoice, UUID> {
+    Optional<Invoice> findByJobId(UUID jobId);
+    List<Invoice> findByPilotIdOrderByCreatedAtDesc(String pilotId);
+    List<Invoice> findByClientIdOrderByCreatedAtDesc(UUID clientId);
 
-    Optional<Invoice> findByIdAndUserId(String id, String userId);
-
-    List<Invoice> findByUserIdAndStatus(String userId, String status);
-
-    List<Invoice> findByUserIdAndClientId(String userId, String clientId);
-
-    @Query("SELECT MAX(CAST(SUBSTRING(i.invoiceNumber, 5) AS integer)) FROM Invoice i WHERE i.userId = :userId")
-    Optional<Integer> findMaxInvoiceNumberByUserId(@Param("userId") String userId);
-
-    long countByUserId(String userId);
-
-    long countByUserIdAndStatus(String userId, String status);
+    @Query("SELECT COALESCE(MAX(CAST(SUBSTRING(i.invoiceNumber, 10) AS int)), 0) FROM Invoice i WHERE i.invoiceNumber LIKE :prefix%")
+    int findMaxInvoiceNumberForPrefix(@Param("prefix") String prefix);
 }

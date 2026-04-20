@@ -60,9 +60,14 @@ public class SecurityConfig {
                     "/api/auth/**",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/uploads/**"
                 ).permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                .requestMatchers("/api/pilot/**").hasRole("PILOT")
+                .requestMatchers("/api/company/**").hasRole("COMPANY")
+                .requestMatchers("/api/jobs/**").hasAnyRole("PILOT", "COMPANY", "CLIENT", "ADMIN")
+                .requestMatchers("/api/documents/**").authenticated()
                 .anyRequest().authenticated()
             )
             .authenticationProvider(authenticationProvider())
@@ -94,7 +99,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(allowedOrigins));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-User-Id"));
         configuration.setExposedHeaders(Arrays.asList("Location"));
         configuration.setAllowCredentials(true);

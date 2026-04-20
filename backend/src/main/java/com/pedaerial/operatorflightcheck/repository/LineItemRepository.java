@@ -1,12 +1,11 @@
 package com.pedaerial.operatorflightcheck.repository;
 
 import com.pedaerial.operatorflightcheck.entity.LineItem;
-import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface LineItemRepository extends JpaRepository<LineItem, String> {
+import java.util.List;
+import java.util.UUID;
 
-    List<LineItem> findByInvoiceIdOrderBySortOrderAsc(String invoiceId);
-
-    void deleteByInvoiceId(String invoiceId);
+public interface LineItemRepository extends JpaRepository<LineItem, UUID> {
+    List<LineItem> findByInvoiceIdOrderBySortOrderAsc(UUID invoiceId);
 }

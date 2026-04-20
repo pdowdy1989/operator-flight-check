@@ -1,7 +1,6 @@
 import { useState } from "react";
+import "./Card.css";
 
-// Reusable Card component — white background, rounded, soft shadow.
-// Pass expandable=true to get collapse/expand behavior.
 export default function Card({
   children,
   className = "",
@@ -9,60 +8,38 @@ export default function Card({
   defaultExpanded = true,
   title,
   headerRight,
+  header,
+  footer,
+  noPadding = false,
   onClick,
   ...props
 }) {
   const [expanded, setExpanded] = useState(defaultExpanded);
-
   const isClickable = !expandable && typeof onClick === "function";
 
   return (
     <div
-      className={[
-        "bg-white rounded-2xl border border-border shadow-card",
-        isClickable ? "cursor-pointer hover:shadow-card-hover active:scale-[0.99]" : "",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
+      className={`ui-card ${isClickable ? "ui-card--clickable" : ""} ${className}`}
       onClick={isClickable ? onClick : undefined}
       {...props}
     >
-      {(title || expandable) && (
+      {(title || expandable || headerRight) && (
         <div
-          className={[
-            "flex items-center justify-between px-4 py-3 border-b border-border",
-            expandable ? "cursor-pointer select-none" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          onClick={expandable ? () => setExpanded((v) => !v) : undefined}
+          className="ui-card-topbar"
+          onClick={expandable ? () => setExpanded((value) => !value) : undefined}
           role={expandable ? "button" : undefined}
           aria-expanded={expandable ? expanded : undefined}
           tabIndex={expandable ? 0 : undefined}
-          onKeyDown={
-            expandable
-              ? (e) => e.key === "Enter" && setExpanded((v) => !v)
-              : undefined
-          }
+          onKeyDown={expandable ? (event) => event.key === "Enter" && setExpanded((value) => !value) : undefined}
         >
-          {title && (
-            <span className="font-semibold text-text-primary">{title}</span>
-          )}
-          {headerRight && !expandable && (
-            <span>{headerRight}</span>
-          )}
-          {expandable && (
-            <span
-              className="text-text-muted text-lg leading-none"
-              aria-hidden="true"
-            >
-              {expanded ? "−" : "+"}
-            </span>
-          )}
+          {title ? <span className="ui-card-heading">{title}</span> : <span />}
+          {headerRight && !expandable ? <span>{headerRight}</span> : null}
+          {expandable ? <span className="ui-card-toggle">{expanded ? "−" : "+"}</span> : null}
         </div>
       )}
-      {(!expandable || expanded) && <div>{children}</div>}
+      {header ? <div className="ui-card-header">{header}</div> : null}
+      {(!expandable || expanded) ? <div className={`ui-card-body ${noPadding ? "no-padding" : ""}`}>{children}</div> : null}
+      {footer ? <div className="ui-card-footer">{footer}</div> : null}
     </div>
   );
 }

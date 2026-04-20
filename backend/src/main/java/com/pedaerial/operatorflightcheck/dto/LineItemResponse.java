@@ -1,22 +1,13 @@
 package com.pedaerial.operatorflightcheck.dto;
 
 import java.math.BigDecimal;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.UUID;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class LineItemResponse {
-    private String id;
-    private String missionId;
-    private String missionTitle;
-    private String description;
-    private BigDecimal quantity;
-    private BigDecimal unitPrice;
-    private BigDecimal amount;
-    private Integer sortOrder;
-}
+public record LineItemResponse(
+    UUID id,
+    String description,
+    BigDecimal quantity,
+    BigDecimal unitPrice,
+    BigDecimal amount,
+    Integer sortOrder
+) {}

@@ -1,10 +1,9 @@
 package com.pedaerial.operatorflightcheck.entity;
 
 public enum PaymentMethod {
-    CASH,
-    CHECK,
     BANK_TRANSFER,
+    ACH,
     CREDIT_CARD,
-    PAYPAL,
+    CHECK,
     OTHER
 }

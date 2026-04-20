@@ -1,8 +1,8 @@
 import axios from "axios";
-import { AUTH_STORAGE_KEY, removeStorage, writeJsonStorage } from "../utils/authStorage";
+import { AUTH_STORAGE_KEY, removeStorage } from "../utils/authStorage";
 
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8080/api",
+  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8081/api",
   headers: {
     "Content-Type": "application/json",
   },
@@ -42,3 +42,5 @@ apiClient.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+export default apiClient;

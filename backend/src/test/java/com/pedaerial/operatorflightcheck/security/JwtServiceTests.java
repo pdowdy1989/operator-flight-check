@@ -37,7 +37,7 @@ class JwtServiceTests {
 
         assertThat(jwtService.extractUserId(token)).isEqualTo("user-1");
         assertThat(jwtService.extractEmail(token)).isEqualTo("pilot@pedaerial.com");
-        assertThat(jwtService.parseClaims(token).get("role", String.class)).isEqualTo("USER");
+        assertThat(jwtService.parseClaims(token).get("role", String.class)).isEqualTo("PILOT");
     }
 
     @Test
@@ -109,7 +109,7 @@ class JwtServiceTests {
         user.setId(id);
         user.setEmail(email);
         user.setPasswordHash("hashed-password");
-        user.setRole(Role.USER);
+        user.setRole(Role.PILOT);
         return user;
     }
 }

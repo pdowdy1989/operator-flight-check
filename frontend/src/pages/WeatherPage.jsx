@@ -1,107 +1,174 @@
-import { useEffect, useMemo } from "react";
-import ForecastCard from "../components/features/ForecastCard";
-import LocationSearch from "../components/features/LocationSearch";
-import PageWrapper from "../components/layout/PageWrapper";
-import { ForecastCardSkeleton } from "../components/ui/LoadingSkeletons";
-import { useSelectedLocation } from "../context/LocationContext";
-import { useProfile } from "../context/ProfileContext";
-import { useWeather } from "../hooks/useWeather";
-import { calculateForecastSummary } from "../utils/scoring";
+import { useState } from "react";
+import PageShell from "../components/ui/PageShell";
+import Button from "../components/ui/Button";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import FlyScoreGauge from "../components/ui/FlyScoreGauge";
+import { StatusBadge } from "../components/ui/StatusBadge";
+import { weatherService } from "../services/weatherService";
+import { formatPrecip, formatWind, scoreToLabel } from "../utils/formatters";
+import "./WeatherPage.css";
 
-export default function WeatherPage() {
-  const { activeProfile } = useProfile();
-  const { selectedLocation, selectLocation } = useSelectedLocation();
-  const { loading, forecast, hourly, error, fetchForecast, selectDay, selectedDay, lastUpdated } =
-    useWeather(selectedLocation, activeProfile);
+const PRESET_LOCATIONS = [
+  { name: "Columbus, OH", lat: "39.9612", lon: "-82.9988" },
+  { name: "Charlotte, NC", lat: "35.2271", lon: "-80.8431" },
+  { name: "Denver, CO", lat: "39.7392", lon: "-104.9903" },
+];
 
-  useEffect(() => {
-    if (activeProfile) {
-      fetchForecast();
-    }
-  }, [activeProfile, fetchForecast, selectedLocation]);
-
-  const summary = useMemo(
-    () => (forecast.length ? calculateForecastSummary(forecast) : null),
-    [forecast]
-  );
-
-  return (
-    <PageWrapper title="7-Day Forecast" subtitle={selectedLocation.label}>
-      <div className="mb-5">
-        <LocationSearch value={selectedLocation} onChange={selectLocation} />
-      </div>
-
-      {summary ? (
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          <SummaryChip
-            label="Best day"
-            value={summary.bestWindow?.day ?? "—"}
-            color="text-status-green-text"
-            background="bg-status-green-bg"
-            featured
-          />
-          <SummaryChip
-            label="Caution days"
-            value={summary.cautionDays}
-            color="text-status-yellow-text"
-            background="bg-status-yellow-bg"
-          />
-          <SummaryChip
-            label="No-fly days"
-            value={summary.noFlyDays}
-            color="text-status-red-text"
-            background="bg-status-red-bg"
-          />
-        </div>
-      ) : null}
-
-      {lastUpdated ? (
-        <p className="mb-4 text-xs text-text-muted">
-          Last updated {new Date(lastUpdated).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-        </p>
-      ) : null}
-
-      {loading ? (
-        <div className="flex flex-col gap-3">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <ForecastCardSkeleton key={index} />
-          ))}
-        </div>
-      ) : error ? (
-        <div className="bg-status-red-bg text-status-red-text rounded-2xl p-4 text-sm" role="alert">
-          {error}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {forecast.map((day, index) => (
-            <ForecastCard
-              key={day.day}
-              forecast={day}
-              hourly={hourly[day.day] ?? []}
-              isSelected={selectedDay?.day === day.day}
-              onClick={selectDay}
-              windTrend={
-                index === 0
-                  ? "steady"
-                  : day.windMph > forecast[index - 1].windMph
-                    ? "up"
-                    : day.windMph < forecast[index - 1].windMph
-                      ? "down"
-                      : "steady"
-              }
-            />
-          ))}
-        </div>
-      )}
-    </PageWrapper>
-  );
+function getDefaultMissionDate() {
+  return new Date().toISOString().slice(0, 10);
 }
 
-function SummaryChip({ label, value, color, background, featured = false }) {
+export default function WeatherPage() {
+  const [form, setForm] = useState({
+    lat: PRESET_LOCATIONS[0].lat,
+    lon: PRESET_LOCATIONS[0].lon,
+    missionDate: getDefaultMissionDate(),
+  });
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const setField = (field) => (event) => {
+    setForm((current) => ({ ...current, [field]: event.target.value }));
+  };
+
+  const applyPreset = (preset) => {
+    setForm((current) => ({
+      ...current,
+      lat: preset.lat,
+      lon: preset.lon,
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const preview = await weatherService.getMissionWeatherPreview({
+        lat: Number(form.lat),
+        lon: Number(form.lon),
+        missionDate: form.missionDate,
+      });
+      setResult(preview);
+    } catch (err) {
+      setError(err.message || "Unable to load weather preview.");
+      setResult(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className={`${background} rounded-xl border border-border shadow-card px-3 py-2 text-center animate-fade-in-up`}>
-      <div className={`${featured ? "text-2xl" : "text-xl"} font-black ${color}`}>{value}</div>
-      <div className="text-xs text-text-muted mt-0.5">{label}</div>
-    </div>
+    <PageShell
+      title="Weather"
+      subtitle="Run a flight-readiness check inside the app without bouncing back to the landing page."
+    >
+      <div className="weather-page">
+        <Card className="weather-page__panel">
+          <div className="weather-page__intro">
+            <div>
+              <p className="weather-page__eyebrow">Flight outlook</p>
+              <h2 className="weather-page__heading">Check a location and mission date</h2>
+            </div>
+            <div className="weather-page__preset-row">
+              {PRESET_LOCATIONS.map((preset) => (
+                <button
+                  key={preset.name}
+                  type="button"
+                  className="weather-page__preset"
+                  onClick={() => applyPreset(preset)}
+                >
+                  {preset.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <form className="weather-page__form" onSubmit={handleSubmit}>
+            <Input
+              id="weather-lat"
+              label="Latitude"
+              value={form.lat}
+              onChange={setField("lat")}
+              placeholder="39.9612"
+            />
+            <Input
+              id="weather-lon"
+              label="Longitude"
+              value={form.lon}
+              onChange={setField("lon")}
+              placeholder="-82.9988"
+            />
+            <Input
+              id="weather-date"
+              label="Mission date"
+              type="date"
+              value={form.missionDate}
+              onChange={setField("missionDate")}
+            />
+            <div className="weather-page__submit">
+              <Button type="submit" size="lg" disabled={loading}>
+                {loading ? "Checking weather..." : "Check weather"}
+              </Button>
+            </div>
+          </form>
+
+          {error ? <div className="weather-page__error">{error}</div> : null}
+        </Card>
+
+        <div className="weather-page__result-grid">
+          <Card className="weather-page__score-card">
+            {result ? (
+              <div className="weather-page__score-layout">
+                <div className="weather-page__score-main">
+                  <p className="weather-page__eyebrow">Readiness</p>
+                  <div className="weather-page__status-row">
+                    <h3 className="weather-page__result-title">{scoreToLabel(result.score)}</h3>
+                    <StatusBadge status={result.status} size="sm" />
+                  </div>
+                  <p className="weather-page__result-copy">
+                    {result.conditionLabel} with winds around {formatWind(result.windMph)} and precipitation near{" "}
+                    {formatPrecip(result.precipPct)}.
+                  </p>
+                </div>
+                <FlyScoreGauge score={result.score} size={180} />
+              </div>
+            ) : (
+              <div className="weather-page__empty">
+                <p className="weather-page__eyebrow">Readiness</p>
+                <h3 className="weather-page__result-title">No weather check yet</h3>
+                <p className="weather-page__result-copy">
+                  Pick a location, run the forecast, and the fly score will appear here.
+                </p>
+              </div>
+            )}
+          </Card>
+
+          <Card className="weather-page__metrics-card" title="Weather breakdown">
+            <div className="weather-page__metrics">
+              <div className="weather-page__metric">
+                <span>Wind</span>
+                <strong>{result ? formatWind(result.windMph) : "--"}</strong>
+              </div>
+              <div className="weather-page__metric">
+                <span>Gusts</span>
+                <strong>{result ? formatWind(result.gustMph) : "--"}</strong>
+              </div>
+              <div className="weather-page__metric">
+                <span>Precipitation</span>
+                <strong>{result ? formatPrecip(result.precipPct) : "--"}</strong>
+              </div>
+              <div className="weather-page__metric">
+                <span>Conditions</span>
+                <strong>{result ? result.conditionLabel : "--"}</strong>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </PageShell>
   );
 }
