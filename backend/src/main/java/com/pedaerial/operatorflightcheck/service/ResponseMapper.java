@@ -43,25 +43,6 @@ public class ResponseMapper {
         );
     }
 
-    public InsuranceDetailsResponse toInsuranceDetailsResponse(InsuranceDetails details) {
-        if (details == null) return null;
-        return new InsuranceDetailsResponse(
-            details.getId(),
-            details.getJob().getId(),
-            details.getClaimNumber(),
-            details.getPolicyNumber(),
-            details.getInsuranceCompany(),
-            details.getAdjusterName(),
-            details.getAdjusterEmail(),
-            details.getAdjusterPhone(),
-            details.getLossDate(),
-            details.getLossType(),
-            details.getPropertyType(),
-            details.getInspectionScope(),
-            details.getCreatedAt()
-        );
-    }
-
     public JobResponse toJobResponse(Job job, long documentCount) {
         String pilotId = job.getPilot() != null ? job.getPilot().getId() : null;
         String pilotName = job.getPilot() != null
@@ -88,7 +69,16 @@ public class ResponseMapper {
             job.getActualDuration(),
             job.getNotes(),
             documentCount,
-            toInsuranceDetailsResponse(job.getInsuranceDetails()),
+            job.getClaimNumber(),
+            job.getPolicyNumber(),
+            job.getInsuranceCompanyName(),
+            job.getAdjusterName(),
+            job.getAdjusterEmail(),
+            job.getAdjusterPhone(),
+            job.getLossDate(),
+            job.getLossType(),
+            job.getPropertyType(),
+            job.getInspectionScope(),
             job.getCreatedAt(),
             job.getUpdatedAt()
         );

@@ -1,6 +1,6 @@
 package com.pedaerial.operatorflightcheck.service;
 
-import com.pedaerial.operatorflightcheck.dto.JobRequest;
+import com.pedaerial.operatorflightcheck.dto.JobCreateRequest;
 import com.pedaerial.operatorflightcheck.dto.JobResponse;
 import com.pedaerial.operatorflightcheck.dto.JobStatusUpdateRequest;
 import com.pedaerial.operatorflightcheck.entity.*;
@@ -20,28 +20,32 @@ public class JobService {
 
     private final JobRepository jobRepository;
     private final ClientRepository clientRepository;
-    private final InsuranceDetailsRepository insuranceDetailsRepository;
     private final UserRepository userRepository;
     private final DocumentRepository documentRepository;
     private final ResponseMapper mapper;
 
     public JobService(JobRepository jobRepository, ClientRepository clientRepository,
-                      InsuranceDetailsRepository insuranceDetailsRepository, UserRepository userRepository,
-                      DocumentRepository documentRepository, ResponseMapper mapper) {
+                      UserRepository userRepository, DocumentRepository documentRepository,
+                      ResponseMapper mapper) {
         this.jobRepository = jobRepository;
         this.clientRepository = clientRepository;
-        this.insuranceDetailsRepository = insuranceDetailsRepository;
         this.userRepository = userRepository;
         this.documentRepository = documentRepository;
         this.mapper = mapper;
     }
 
-    public JobResponse createJob(JobRequest request, String pilotId) {
+    public JobResponse createJob(JobCreateRequest request, String pilotId) {
         Client client = clientRepository.findById(request.clientId())
             .orElseThrow(() -> new ResourceNotFoundException("Client not found: " + request.clientId()));
 
         User pilot = userRepository.findById(pilotId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found: " + pilotId));
+
+        if (request.jobType() == JobType.INSURANCE_INSPECTION) {
+            if (request.claimNumber() == null || request.claimNumber().isBlank()) {
+                throw new BadRequestException("Insurance inspection requires a claim number.");
+            }
+        }
 
         Job job = Job.builder()
             .pilot(pilot)
@@ -58,33 +62,19 @@ public class JobService {
             .scheduledTime(request.scheduledTime())
             .estimatedDuration(request.estimatedDuration())
             .notes(request.notes())
+            .claimNumber(request.claimNumber())
+            .policyNumber(request.policyNumber())
+            .insuranceCompanyName(request.insuranceCompanyName())
+            .adjusterName(request.adjusterName())
+            .adjusterEmail(request.adjusterEmail())
+            .adjusterPhone(request.adjusterPhone())
+            .lossDate(request.lossDate())
+            .lossType(request.lossType())
+            .propertyType(request.propertyType())
+            .inspectionScope(request.inspectionScope())
             .build();
 
         job = jobRepository.save(job);
-
-        if (request.jobType() == JobType.INSURANCE_INSPECTION) {
-            if (request.insuranceDetails() == null || request.insuranceDetails().claimNumber() == null
-                    || request.insuranceDetails().claimNumber().isBlank()) {
-                throw new BadRequestException("Insurance inspection requires a claim number.");
-            }
-            var details = request.insuranceDetails();
-            InsuranceDetails insuranceDetails = InsuranceDetails.builder()
-                .job(job)
-                .claimNumber(details.claimNumber())
-                .policyNumber(details.policyNumber())
-                .insuranceCompany(details.insuranceCompany())
-                .adjusterName(details.adjusterName())
-                .adjusterEmail(details.adjusterEmail())
-                .adjusterPhone(details.adjusterPhone())
-                .lossDate(details.lossDate())
-                .lossType(details.lossType())
-                .propertyType(details.propertyType())
-                .inspectionScope(details.inspectionScope())
-                .build();
-            insuranceDetailsRepository.save(insuranceDetails);
-            job.setInsuranceDetails(insuranceDetails);
-        }
-
         long docCount = documentRepository.countByJobId(job.getId());
         return mapper.toJobResponse(job, docCount);
     }
@@ -118,7 +108,7 @@ public class JobService {
         return mapper.toJobResponse(job, docCount);
     }
 
-    public JobResponse updateJob(UUID jobId, JobRequest request, String requesterId) {
+    public JobResponse updateJob(UUID jobId, JobCreateRequest request, String requesterId) {
         Job job = findJobOwned(jobId, requesterId);
 
         job.setTitle(request.title());
@@ -131,6 +121,16 @@ public class JobService {
         job.setScheduledTime(request.scheduledTime());
         job.setEstimatedDuration(request.estimatedDuration());
         job.setNotes(request.notes());
+        job.setClaimNumber(request.claimNumber());
+        job.setPolicyNumber(request.policyNumber());
+        job.setInsuranceCompanyName(request.insuranceCompanyName());
+        job.setAdjusterName(request.adjusterName());
+        job.setAdjusterEmail(request.adjusterEmail());
+        job.setAdjusterPhone(request.adjusterPhone());
+        job.setLossDate(request.lossDate());
+        job.setLossType(request.lossType());
+        job.setPropertyType(request.propertyType());
+        job.setInspectionScope(request.inspectionScope());
 
         job = jobRepository.save(job);
         long docCount = documentRepository.countByJobId(job.getId());

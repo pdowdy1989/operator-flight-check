@@ -1,10 +1,7 @@
 package com.pedaerial.operatorflightcheck.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -18,50 +15,29 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "jobs")
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class Job {
+@Table(name = "job_requests")
+@Data @Builder @NoArgsConstructor @AllArgsConstructor
+public class JobRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(updatable = false, nullable = false)
     private UUID id;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "pilot_id")
-    private User pilot;
-
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false)
-    private Client client;
+    @JoinColumn(name = "requester_id", nullable = false)
+    private User requester;
 
-    @NotBlank
-    @Size(max = 255)
-    @Column(nullable = false, length = 255)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "reviewed_by_pilot_id")
+    private User reviewedByPilot;
 
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "job_type", nullable = false, length = 30)
-    private JobType jobType;
-
-    @NotNull
-    @Enumerated(EnumType.STRING)
-    @Builder.Default
     @Column(nullable = false, length = 30)
-    private JobStatus status = JobStatus.REQUESTED;
-
-    @Enumerated(EnumType.STRING)
     @Builder.Default
-    @Column(length = 20)
-    private JobPriority priority = JobPriority.NORMAL;
+    private JobRequestStatus status = JobRequestStatus.PENDING;
 
     @NotBlank
     @Size(max = 500)
@@ -74,20 +50,38 @@ public class Job {
     @Column(name = "site_lon", precision = 10, scale = 6)
     private BigDecimal siteLon;
 
-    @Column(name = "scheduled_date")
-    private LocalDate scheduledDate;
+    @Column(name = "requested_date")
+    private LocalDate requestedDate;
 
-    @Column(name = "scheduled_time")
-    private LocalTime scheduledTime;
+    @Column(name = "requested_time")
+    private LocalTime requestedTime;
 
-    @Column(name = "estimated_duration")
-    private Integer estimatedDuration;
+    @Builder.Default
+    @Column(name = "is_recurring", nullable = false)
+    private Boolean isRecurring = false;
 
-    @Column(name = "actual_duration")
-    private Integer actualDuration;
+    @Size(max = 100)
+    @Column(name = "recurrence_pattern")
+    private String recurrencePattern;
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+
+    @NotNull
+    @Column(name = "rate_card_total", nullable = false, precision = 10, scale = 2)
+    private BigDecimal rateCardTotal;
+
+    @NotNull
+    @Builder.Default
+    @Column(name = "discount_percent", nullable = false, precision = 5, scale = 2)
+    private BigDecimal discountPercent = BigDecimal.ZERO;
+
+    @NotNull
+    @Column(name = "final_amount", nullable = false, precision = 10, scale = 2)
+    private BigDecimal finalAmount;
+
+    @Column(name = "proposed_budget", precision = 10, scale = 2)
+    private BigDecimal proposedBudget;
 
     @Size(max = 100)
     @Column(name = "claim_number")
@@ -105,8 +99,7 @@ public class Job {
     @Column(name = "adjuster_name")
     private String adjusterName;
 
-    @Email
-    @Size(max = 255)
+    @Email @Size(max = 255)
     @Column(name = "adjuster_email")
     private String adjusterEmail;
 
@@ -128,13 +121,20 @@ public class Job {
     @Column(name = "inspection_scope", columnDefinition = "TEXT")
     private String inspectionScope;
 
+    @OneToMany(mappedBy = "jobRequest", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Mission> missions = new ArrayList<>();
+    private List<JobRequestLineItem> lineItems = new ArrayList<>();
 
-    @Builder.Default
-    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Document> documents = new ArrayList<>();
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "created_job_id")
+    private Job createdJob;
+
+    @Column(name = "decided_at")
+    private Instant decidedAt;
+
+    @Size(max = 1000)
+    @Column(name = "decision_notes", columnDefinition = "TEXT")
+    private String decisionNotes;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

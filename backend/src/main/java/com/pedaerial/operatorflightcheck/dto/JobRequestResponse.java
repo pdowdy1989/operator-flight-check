@@ -1,8 +1,6 @@
 package com.pedaerial.operatorflightcheck.dto;
 
-import com.pedaerial.operatorflightcheck.entity.JobPriority;
-import com.pedaerial.operatorflightcheck.entity.JobStatus;
-import com.pedaerial.operatorflightcheck.entity.JobType;
+import com.pedaerial.operatorflightcheck.entity.JobRequestStatus;
 import com.pedaerial.operatorflightcheck.entity.LossType;
 import com.pedaerial.operatorflightcheck.entity.PropertyType;
 
@@ -10,30 +8,26 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.UUID;
 
-public record JobResponse(
+public record JobRequestResponse(
     UUID id,
-    String pilotId,
-    String pilotName,
-    UUID clientId,
-    String clientName,
-    String clientType,
-    String title,
-    String description,
-    JobType jobType,
-    JobStatus status,
-    JobPriority priority,
+    String requesterId,
+    String reviewedByPilotId,
+    JobRequestStatus status,
     String siteAddress,
     BigDecimal siteLat,
     BigDecimal siteLon,
-    LocalDate scheduledDate,
-    LocalTime scheduledTime,
-    Integer estimatedDuration,
-    Integer actualDuration,
+    LocalDate requestedDate,
+    LocalTime requestedTime,
+    Boolean isRecurring,
+    String recurrencePattern,
     String notes,
-    long documentCount,
-    // Insurance-claim-ready fields (flat, any role can populate)
+    BigDecimal rateCardTotal,
+    BigDecimal discountPercent,
+    BigDecimal finalAmount,
+    BigDecimal proposedBudget,
     String claimNumber,
     String policyNumber,
     String insuranceCompanyName,
@@ -44,6 +38,10 @@ public record JobResponse(
     LossType lossType,
     PropertyType propertyType,
     String inspectionScope,
+    List<JobRequestLineItemResponse> lineItems,
+    UUID createdJobId,
+    Instant decidedAt,
+    String decisionNotes,
     Instant createdAt,
     Instant updatedAt
 ) {}

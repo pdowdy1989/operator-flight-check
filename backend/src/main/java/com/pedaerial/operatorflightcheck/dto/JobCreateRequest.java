@@ -2,6 +2,9 @@ package com.pedaerial.operatorflightcheck.dto;
 
 import com.pedaerial.operatorflightcheck.entity.JobPriority;
 import com.pedaerial.operatorflightcheck.entity.JobType;
+import com.pedaerial.operatorflightcheck.entity.LossType;
+import com.pedaerial.operatorflightcheck.entity.PropertyType;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -11,7 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.UUID;
 
-public record JobRequest(
+public record JobCreateRequest(
     @NotNull(message = "Client ID is required.")
     UUID clientId,
 
@@ -37,6 +40,15 @@ public record JobRequest(
     Integer estimatedDuration,
     String notes,
 
-    // Only populated when jobType == INSURANCE_INSPECTION
-    InsuranceDetailsRequest insuranceDetails
+    // Insurance-claim-ready fields (optional, usable by any role)
+    @Size(max = 100) String claimNumber,
+    @Size(max = 100) String policyNumber,
+    @Size(max = 255) String insuranceCompanyName,
+    @Size(max = 255) String adjusterName,
+    @Email @Size(max = 255) String adjusterEmail,
+    @Size(max = 50) String adjusterPhone,
+    LocalDate lossDate,
+    LossType lossType,
+    PropertyType propertyType,
+    String inspectionScope
 ) {}

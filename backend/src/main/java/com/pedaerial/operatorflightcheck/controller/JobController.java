@@ -1,6 +1,6 @@
 package com.pedaerial.operatorflightcheck.controller;
 
-import com.pedaerial.operatorflightcheck.dto.JobRequest;
+import com.pedaerial.operatorflightcheck.dto.JobCreateRequest;
 import com.pedaerial.operatorflightcheck.dto.JobResponse;
 import com.pedaerial.operatorflightcheck.dto.JobStatusUpdateRequest;
 import com.pedaerial.operatorflightcheck.entity.Role;
@@ -25,7 +25,7 @@ public class JobController {
     }
 
     @PostMapping
-    public ResponseEntity<JobResponse> createJob(@Valid @RequestBody JobRequest request,
+    public ResponseEntity<JobResponse> createJob(@Valid @RequestBody JobCreateRequest request,
                                                   @AuthenticationPrincipal AppUserPrincipal principal) {
         return ResponseEntity.ok(jobService.createJob(request, principal.getId()));
     }
@@ -55,7 +55,7 @@ public class JobController {
 
     @PutMapping("/{id}")
     public ResponseEntity<JobResponse> updateJob(@PathVariable UUID id,
-                                                  @Valid @RequestBody JobRequest request,
+                                                  @Valid @RequestBody JobCreateRequest request,
                                                   @AuthenticationPrincipal AppUserPrincipal principal) {
         return ResponseEntity.ok(jobService.updateJob(id, request, principal.getId()));
     }

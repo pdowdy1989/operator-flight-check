@@ -69,6 +69,46 @@ public class User {
     @Column(name = "license_number", length = 50)
     private String licenseNumber;
 
+    @Size(max = 255)
+    @Column(name = "business_name")
+    private String businessName;
+
+    @Size(max = 50)
+    @Column(name = "ein")
+    private String ein;
+
+    @Builder.Default
+    @Column(name = "llc_verified", nullable = false)
+    private Boolean llcVerified = false;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "payment_terms", length = 20)
+    private PaymentTerms paymentTerms;
+
+    @Size(max = 500)
+    @Column(name = "billing_address")
+    private String billingAddress;
+
+    @Size(max = 100)
+    @Column(name = "billing_city")
+    private String billingCity;
+
+    @Size(max = 50)
+    @Column(name = "billing_state")
+    private String billingState;
+
+    @Size(max = 20)
+    @Column(name = "billing_zip")
+    private String billingZip;
+
+    @Size(max = 100)
+    @Column(name = "insurance_policy_number")
+    private String insurancePolicyNumber;
+
+    @Size(max = 255)
+    @Column(name = "insurance_company_name")
+    private String insuranceCompanyName;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 

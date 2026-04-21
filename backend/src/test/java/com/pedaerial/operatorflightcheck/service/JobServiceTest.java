@@ -1,6 +1,6 @@
 package com.pedaerial.operatorflightcheck.service;
 
-import com.pedaerial.operatorflightcheck.dto.JobRequest;
+import com.pedaerial.operatorflightcheck.dto.JobCreateRequest;
 import com.pedaerial.operatorflightcheck.dto.JobResponse;
 import com.pedaerial.operatorflightcheck.entity.*;
 import com.pedaerial.operatorflightcheck.exception.BadRequestException;
@@ -26,7 +26,6 @@ class JobServiceTest {
 
     @Mock JobRepository jobRepository;
     @Mock ClientRepository clientRepository;
-    @Mock InsuranceDetailsRepository insuranceDetailsRepository;
     @Mock UserRepository userRepository;
     @Mock DocumentRepository documentRepository;
     @Mock ResponseMapper mapper;
@@ -53,8 +52,12 @@ class JobServiceTest {
 
     @Test
     void createJob_success() {
-        JobRequest request = new JobRequest(client.getId(), "Roof Survey", null,
-            JobType.ROOF_SURVEY, JobPriority.NORMAL, "123 Main St", null, null, null, null, null, null, null);
+        JobCreateRequest request = new JobCreateRequest(
+            client.getId(), "Roof Survey", null,
+            JobType.ROOF_SURVEY, JobPriority.NORMAL, "123 Main St",
+            null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null, null, null
+        );
 
         when(clientRepository.findById(client.getId())).thenReturn(Optional.of(client));
         when(userRepository.findById(pilot.getId())).thenReturn(Optional.of(pilot));
@@ -70,12 +73,15 @@ class JobServiceTest {
 
     @Test
     void createJob_insuranceWithoutClaimNumber_throws() {
-        JobRequest request = new JobRequest(client.getId(), "Inspection", null,
-            JobType.INSURANCE_INSPECTION, JobPriority.HIGH, "123 Main St", null, null, null, null, null, null, null);
+        JobCreateRequest request = new JobCreateRequest(
+            client.getId(), "Inspection", null,
+            JobType.INSURANCE_INSPECTION, JobPriority.HIGH, "123 Main St",
+            null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null, null, null
+        );
 
         when(clientRepository.findById(client.getId())).thenReturn(Optional.of(client));
         when(userRepository.findById(pilot.getId())).thenReturn(Optional.of(pilot));
-        when(jobRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
         assertThatThrownBy(() -> jobService.createJob(request, pilot.getId()))
             .isInstanceOf(BadRequestException.class)
@@ -85,8 +91,12 @@ class JobServiceTest {
     @Test
     void createJob_clientNotFound_throws() {
         UUID badClientId = UUID.randomUUID();
-        JobRequest request = new JobRequest(badClientId, "Survey", null,
-            JobType.ROOF_SURVEY, null, "123 Main St", null, null, null, null, null, null, null);
+        JobCreateRequest request = new JobCreateRequest(
+            badClientId, "Survey", null,
+            JobType.ROOF_SURVEY, null, "123 Main St",
+            null, null, null, null, null, null,
+            null, null, null, null, null, null, null, null, null, null
+        );
 
         when(clientRepository.findById(badClientId)).thenReturn(Optional.empty());
 
