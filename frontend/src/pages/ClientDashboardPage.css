@@ -1,0 +1,118 @@
+.cld-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1.1rem;
+  background: #0096FF;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.cld-cta-btn:hover {
+  background: #007acc;
+}
+
+.cld-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: var(--space-4, 1rem);
+  margin-bottom: var(--space-6, 1.5rem);
+}
+
+.cld-cta-row {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-8, 2rem);
+}
+
+.cld-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.cld-btn--primary {
+  background: #0096FF;
+  color: #fff;
+}
+
+.cld-btn--primary:hover {
+  background: #007acc;
+}
+
+.cld-btn--secondary {
+  background: rgba(255, 255, 255, 0.07);
+  color: #94a3b8;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cld-btn--secondary:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+}
+
+.cld-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 var(--space-4, 1rem);
+}
+
+.cld-empty {
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+.cld-link {
+  color: #0096FF;
+  text-decoration: none;
+}
+
+.cld-link:hover {
+  text-decoration: underline;
+}
+
+.cld-recent-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.cld-recent-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #1e2028;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.875rem 1rem;
+  text-decoration: none;
+  transition: border-color 0.15s;
+}
+
+.cld-recent-item:hover {
+  border-color: rgba(0, 150, 255, 0.3);
+}
+
+.cld-recent-item__address {
+  flex: 1;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #f1f5f9;
+}
+
+.cld-recent-item__meta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: #64748b;
+}

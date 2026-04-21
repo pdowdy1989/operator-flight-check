@@ -1,0 +1,140 @@
+.rate-card-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.rate-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.rate-card-item {
+  background: #1e2028;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.rate-card-item.selected {
+  border-color: #0096FF;
+  box-shadow: 0 0 0 1px rgba(0, 150, 255, 0.3), 0 4px 16px rgba(0, 150, 255, 0.12);
+}
+
+.rate-card-item__name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #f1f5f9;
+}
+
+.rate-card-item__desc {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.rate-card-item__price {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #0096FF;
+  margin-top: 0.25rem;
+}
+
+.rate-card-item__dur {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.rate-card-item__controls {
+  margin-top: auto;
+  padding-top: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rate-card-item__controls button {
+  background: rgba(0, 150, 255, 0.15);
+  border: 1px solid rgba(0, 150, 255, 0.3);
+  color: #0096FF;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+
+.rate-card-item__controls button:hover {
+  background: rgba(0, 150, 255, 0.25);
+}
+
+.rate-card-item__controls .add-btn {
+  width: auto;
+  padding: 0 1rem;
+  font-size: 0.85rem;
+}
+
+.rate-card-item__controls span {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #f1f5f9;
+  min-width: 24px;
+  text-align: center;
+}
+
+.rate-card-empty {
+  color: #64748b;
+  font-style: italic;
+  grid-column: 1 / -1;
+  padding: 2rem 0;
+  text-align: center;
+}
+
+.rate-card-summary {
+  background: #1e2028;
+  border: 1px solid rgba(0, 150, 255, 0.2);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 400px;
+  margin-left: auto;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: #94a3b8;
+}
+
+.summary-row.discount {
+  color: #22c55e;
+}
+
+.summary-row.total {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.discount-tiers {
+  font-size: 0.7rem;
+  color: #475569;
+  text-align: right;
+  margin-top: 0.25rem;
+}

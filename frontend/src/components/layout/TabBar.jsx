@@ -13,14 +13,17 @@ const PILOT_TABS = [
 ];
 const COMPANY_TABS = [
   { to: "/dashboard", label: "Dashboard", shortLabel: "Dash", icon: "grid" },
-  { to: "/jobs", label: "Inspections", shortLabel: "Jobs", icon: "briefcase" },
-  { to: "/documents", label: "Documents", shortLabel: "Docs", icon: "log" },
+  { to: "/request-work", label: "Request Work", shortLabel: "Request", icon: "briefcase" },
+  { to: "/my-requests", label: "My Requests", shortLabel: "Requests", icon: "log" },
+  { to: "/archive", label: "Archive", shortLabel: "Archive", icon: "layers" },
+  { to: "/profile", label: "Profile", shortLabel: "Profile", icon: "users" },
 ];
 const CLIENT_TABS = [
   { to: "/dashboard", label: "Dashboard", shortLabel: "Dash", icon: "grid" },
-  { to: "/jobs", label: "My Jobs", shortLabel: "Jobs", icon: "briefcase" },
-  { to: "/documents", label: "Documents", shortLabel: "Docs", icon: "log" },
-  { to: "/invoices", label: "Invoices", shortLabel: "Invoices", icon: "receipt" },
+  { to: "/request-work", label: "Request Work", shortLabel: "Request", icon: "briefcase" },
+  { to: "/my-requests", label: "My Requests", shortLabel: "Requests", icon: "log" },
+  { to: "/archive", label: "Archive", shortLabel: "Archive", icon: "layers" },
+  { to: "/profile", label: "Profile", shortLabel: "Profile", icon: "users" },
 ];
 const ADMIN_TABS = [
   { to: "/dashboard", label: "Dashboard", shortLabel: "Dash", icon: "grid" },

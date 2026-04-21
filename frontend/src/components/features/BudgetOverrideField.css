@@ -1,0 +1,59 @@
+.budget-override-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.budget-override-field label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.budget-override-field input[type="number"] {
+  width: 100%;
+  background: #1e2028;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  padding: 0.625rem 0.875rem;
+  color: #f1f5f9;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.budget-override-field input[type="number"]:focus {
+  border-color: #0096FF;
+}
+
+.budget-override-field.disabled input[type="number"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.budget-locked,
+.budget-active {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.budget-hint {
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.budget-hint.locked {
+  color: #475569;
+  font-style: italic;
+}
+
+.budget-hint.valid {
+  color: #22c55e;
+}
+
+.budget-hint.invalid {
+  color: #ef4444;
+}

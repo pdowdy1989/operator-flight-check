@@ -1,0 +1,97 @@
+.insurance-accordion {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.insurance-accordion__header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.875rem 1rem;
+  background: #1e2028;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s;
+}
+
+.insurance-accordion__header:hover {
+  background: rgba(255, 255, 255, 0.04);
+  color: #f1f5f9;
+}
+
+.chevron {
+  font-size: 1.25rem;
+  transition: transform 0.2s;
+  display: inline-block;
+}
+
+.chevron.open {
+  transform: rotate(90deg);
+}
+
+.insurance-accordion__body {
+  background: rgba(30, 32, 40, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 1rem;
+}
+
+.ins-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.875rem;
+}
+
+.ins-grid .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.ins-grid .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.ins-grid label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ins-grid input,
+.ins-grid select,
+.ins-grid textarea {
+  background: #2a2d35;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: #f1f5f9;
+  font-size: 0.875rem;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+
+.ins-grid input:focus,
+.ins-grid select:focus,
+.ins-grid textarea:focus {
+  border-color: #0096FF;
+}
+
+.ins-grid select {
+  appearance: auto;
+  cursor: pointer;
+}
+
+.ins-grid textarea {
+  resize: vertical;
+  min-height: 72px;
+}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import PublicRoute from "./components/layout/PublicRoute";
+import RoleGuard from "./components/layout/RoleGuard";
 import { SidebarLayoutProvider } from "./components/layout/SidebarLayoutContext";
 import { useAuth } from "./context/AuthContext";
 
@@ -20,17 +21,24 @@ import DronesPage from "./pages/DronesPage";
 import InvoicesPage from "./pages/InvoicesPage";
 import WeatherPage from "./pages/WeatherPage";
 
-// Pages — protected (insurance / client)
-import InsuranceDashboardPage from "./pages/InsuranceDashboardPage";
+// Pages — protected (client / company)
 import ClientDashboardPage from "./pages/ClientDashboardPage";
+import CompanyDashboardPage from "./pages/CompanyDashboardPage";
+import RequestWorkPage from "./pages/RequestWorkPage";
+import MyRequestsPage from "./pages/MyRequestsPage";
+import RequestDetailPage from "./pages/RequestDetailPage";
+import ArchivePage from "./pages/ArchivePage";
+import ProfilePage from "./pages/ProfilePage";
+import PaymentResultPage from "./pages/PaymentResultPage";
 
 const PROTECTED_ROUTES = [
   "/dashboard", "/jobs", "/documents", "/clients", "/drones", "/invoices", "/weather",
+  "/request-work", "/my-requests", "/archive", "/profile", "/payment",
 ];
 
 function DashboardRedirect() {
   const { user } = useAuth();
-  if (user?.role === "COMPANY") return <InsuranceDashboardPage />;
+  if (user?.role === "COMPANY") return <CompanyDashboardPage />;
   if (user?.role === "CLIENT") return <ClientDashboardPage />;
   return <PilotDashboardPage />;
 }
@@ -96,6 +104,43 @@ export default function App() {
           <Route path="/drones" element={<DronesPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
           <Route path="/weather" element={<WeatherPage />} />
+
+          {/* Client / Company routes */}
+          <Route
+            path="/request-work"
+            element={
+              <RoleGuard allowed={['CLIENT', 'COMPANY']}>
+                <RequestWorkPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/my-requests"
+            element={
+              <RoleGuard allowed={['CLIENT', 'COMPANY']}>
+                <MyRequestsPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/my-requests/:id"
+            element={
+              <RoleGuard allowed={['CLIENT', 'COMPANY']}>
+                <RequestDetailPage />
+              </RoleGuard>
+            }
+          />
+          <Route
+            path="/archive"
+            element={
+              <RoleGuard allowed={['CLIENT', 'COMPANY']}>
+                <ArchivePage />
+              </RoleGuard>
+            }
+          />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/payment/success" element={<PaymentResultPage variant="success" />} />
+          <Route path="/payment/cancel" element={<PaymentResultPage variant="cancel" />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
