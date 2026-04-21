@@ -195,6 +195,113 @@ public class ResponseMapper {
         );
     }
 
+    public ServiceCatalogResponse toServiceCatalogResponse(ServiceCatalog sc) {
+        return new ServiceCatalogResponse(
+            sc.getId(),
+            sc.getJobType(),
+            sc.getName(),
+            sc.getDescription(),
+            sc.getBasePrice(),
+            sc.getEstimatedDurationMinutes(),
+            sc.getActive(),
+            sc.getSortOrder(),
+            sc.getCreatedAt(),
+            sc.getUpdatedAt()
+        );
+    }
+
+    public JobRequestLineItemResponse toJobRequestLineItemResponse(JobRequestLineItem item) {
+        return new JobRequestLineItemResponse(
+            item.getId(),
+            item.getService().getId(),
+            item.getServiceNameSnapshot(),
+            item.getUnitPriceSnapshot(),
+            item.getQuantity(),
+            item.getAmount(),
+            item.getSortOrder()
+        );
+    }
+
+    public JobRequestResponse toJobRequestResponse(JobRequest jr) {
+        var lineItems = jr.getLineItems().stream()
+            .map(this::toJobRequestLineItemResponse)
+            .collect(Collectors.toList());
+        String reviewedByPilotId = jr.getReviewedByPilot() != null ? jr.getReviewedByPilot().getId() : null;
+        UUID createdJobId = jr.getCreatedJob() != null ? jr.getCreatedJob().getId() : null;
+        return new JobRequestResponse(
+            jr.getId(),
+            jr.getRequester().getId(),
+            reviewedByPilotId,
+            jr.getStatus(),
+            jr.getSiteAddress(),
+            jr.getSiteLat(),
+            jr.getSiteLon(),
+            jr.getRequestedDate(),
+            jr.getRequestedTime(),
+            jr.getIsRecurring(),
+            jr.getRecurrencePattern(),
+            jr.getNotes(),
+            jr.getRateCardTotal(),
+            jr.getDiscountPercent(),
+            jr.getFinalAmount(),
+            jr.getProposedBudget(),
+            jr.getClaimNumber(),
+            jr.getPolicyNumber(),
+            jr.getInsuranceCompanyName(),
+            jr.getAdjusterName(),
+            jr.getAdjusterEmail(),
+            jr.getAdjusterPhone(),
+            jr.getLossDate(),
+            jr.getLossType(),
+            jr.getPropertyType(),
+            jr.getInspectionScope(),
+            lineItems,
+            createdJobId,
+            jr.getDecidedAt(),
+            jr.getDecisionNotes(),
+            jr.getCreatedAt(),
+            jr.getUpdatedAt()
+        );
+    }
+
+    public AgreementResponse toAgreementResponse(Agreement a) {
+        return new AgreementResponse(
+            a.getId(),
+            a.getJob().getId(),
+            a.getAgreementNumber(),
+            a.getStatus(),
+            a.getSignedAt(),
+            a.getSignedByName(),
+            a.getSignedByEmail(),
+            a.getPdfPath(),
+            a.getCreatedAt()
+        );
+    }
+
+    public UserProfileResponse toUserProfileResponse(User u) {
+        return new UserProfileResponse(
+            u.getId(),
+            u.getEmail(),
+            u.getRole(),
+            u.getFirstName(),
+            u.getLastName(),
+            u.getPhone(),
+            u.getCompany(),
+            u.getLicenseNumber(),
+            u.getBusinessName(),
+            u.getEin(),
+            u.getLlcVerified(),
+            u.getPaymentTerms(),
+            u.getBillingAddress(),
+            u.getBillingCity(),
+            u.getBillingState(),
+            u.getBillingZip(),
+            u.getInsurancePolicyNumber(),
+            u.getInsuranceCompanyName(),
+            u.getCreatedAt()
+        );
+    }
+
     private String fullName(String firstName, String lastName) {
         if (firstName == null && lastName == null) return null;
         if (firstName == null) return lastName;

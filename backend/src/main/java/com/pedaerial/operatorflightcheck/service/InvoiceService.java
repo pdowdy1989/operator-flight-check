@@ -137,6 +137,12 @@ public class InvoiceService {
         invoiceRepository.delete(invoice);
     }
 
+    @Transactional(readOnly = true)
+    public Invoice getInvoiceEntity(UUID invoiceId) {
+        return invoiceRepository.findById(invoiceId)
+            .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + invoiceId));
+    }
+
     private Invoice findInvoiceOwned(UUID invoiceId, String requesterId) {
         Invoice invoice = invoiceRepository.findById(invoiceId)
             .orElseThrow(() -> new ResourceNotFoundException("Invoice not found: " + invoiceId));
