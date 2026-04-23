@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageShell from '../components/ui/PageShell';
+import AddressFields from '../components/ui/AddressFields';
 import { createJob } from '../services/jobsService';
 import { getClients, createClient } from '../services/clientsService';
 import { useToast } from '../context/ToastContext';
@@ -138,7 +139,12 @@ export default function NewJobPage() {
             <select value={form.priority} onChange={set('priority')} className="new-job__select">
               {['LOW', 'NORMAL', 'HIGH', 'URGENT'].map((p) => <option key={p} value={p}>{p}</option>)}
             </select>
-            <input placeholder="Site address *" value={form.siteAddress} onChange={set('siteAddress')} className="new-job__input new-job__input--full" />
+            <div className="new-job__input--full">
+              <AddressFields
+                required
+                onChange={val => setForm(f => ({ ...f, siteAddress: val }))}
+              />
+            </div>
             <input type="date" value={form.scheduledDate} onChange={set('scheduledDate')} className="new-job__input" />
             <input type="number" placeholder="Est. duration (min)" value={form.estimatedDuration} onChange={set('estimatedDuration')} className="new-job__input" />
             <textarea placeholder="Description" value={form.description} onChange={set('description')} rows={3} className="new-job__input new-job__input--full" />

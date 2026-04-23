@@ -22,8 +22,40 @@ function mapAuthResponse(payload) {
 
 export const authService = {
   async login(credentials) {
-    const response = await apiClient.post("/auth/login", credentials);
-    return persistSession(mapAuthResponse(response.data));
+    const loginUrl = `${(apiClient.defaults.baseURL ?? "").replace(/\/+$/, "")}/auth/login`;
+    console.log("LOGIN REQUEST:", loginUrl, {
+      email: credentials?.email,
+    });
+
+    try {
+      const response = await apiClient.post("/auth/login", credentials);
+      return persistSession(mapAuthResponse(response.data));
+    } catch (error) {
+      console.log("LOGIN ERROR:", error);
+
+      if (error?.response) {
+        console.log("LOGIN ERROR RESPONSE:", {
+          status: error.response.status,
+          data: error.response.data,
+          message: error.message,
+        });
+
+        const backendMessage =
+          error.response.data?.message ||
+          error.response.data?.error ||
+          error.message;
+
+        throw new Error(backendMessage || "Login failed");
+      }
+
+      if (error?.request) {
+        console.log("LOGIN ERROR REQUEST: request made but no response received");
+        throw new Error("Login failed");
+      }
+
+      console.log("LOGIN ERROR GENERIC:", error?.message || error);
+      throw new Error(error?.message || "Login failed");
+    }
   },
 
   async register(details) {

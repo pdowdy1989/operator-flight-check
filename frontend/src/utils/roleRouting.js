@@ -1,5 +1,6 @@
 export function getHomePathForRole(role) {
-  return "/dashboard";
+  if (role === "CLIENT" || role === "COMPANY") return "/my-requests";
+  return "/jobs";
 }
 
 export function getRoleLabel(role) {

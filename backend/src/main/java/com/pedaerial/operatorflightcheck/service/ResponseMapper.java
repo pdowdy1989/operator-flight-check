@@ -213,9 +213,10 @@ public class ResponseMapper {
     public JobRequestLineItemResponse toJobRequestLineItemResponse(JobRequestLineItem item) {
         return new JobRequestLineItemResponse(
             item.getId(),
-            item.getService().getId(),
+            item.getPilotService().getId(),
             item.getServiceNameSnapshot(),
             item.getUnitPriceSnapshot(),
+            item.getPricingTypeSnapshot(),
             item.getQuantity(),
             item.getAmount(),
             item.getSortOrder()

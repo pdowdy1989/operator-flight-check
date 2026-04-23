@@ -6,6 +6,7 @@ import com.pedaerial.operatorflightcheck.entity.PaymentTerms;
 import com.pedaerial.operatorflightcheck.entity.Role;
 import com.pedaerial.operatorflightcheck.entity.User;
 import com.pedaerial.operatorflightcheck.exception.BadRequestException;
+import com.pedaerial.operatorflightcheck.exception.DuplicateEmailException;
 import com.pedaerial.operatorflightcheck.exception.ResourceNotFoundException;
 import com.pedaerial.operatorflightcheck.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,16 @@ public class UserProfileService {
     public UserProfileResponse updateProfile(String userId, UserProfileUpdateRequest req) {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User not found: " + userId));
+
+        if (req.getEmail() != null) {
+            String normalizedEmail = req.getEmail().trim().toLowerCase();
+            userRepository.findByEmail(normalizedEmail)
+                .filter(existing -> !existing.getId().equals(user.getId()))
+                .ifPresent(existing -> {
+                    throw new DuplicateEmailException(normalizedEmail);
+                });
+            user.setEmail(normalizedEmail);
+        }
 
         if (req.getFirstName() != null) user.setFirstName(req.getFirstName());
         if (req.getLastName() != null) user.setLastName(req.getLastName());

@@ -80,6 +80,32 @@ class AuthServiceTests {
     }
 
     @Test
+    void loginUsesTrimmedStoredPasswordHash() {
+        User user = pilotUser("pilot@pedaerial.com", "hashed-password ");
+        when(userRepository.findByEmail("pilot@pedaerial.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "hashed-password")).thenReturn(true);
+        when(jwtService.generateToken(any(AppUserPrincipal.class))).thenReturn("jwt-token");
+
+        AuthResponse response = authService.login(new AuthLoginRequest("pilot@pedaerial.com", "password123"));
+
+        assertThat(response.token()).isEqualTo("jwt-token");
+        verify(passwordEncoder).matches("password123", "hashed-password");
+    }
+
+    @Test
+    void loginPreservesPasswordWhitespaceFromRequest() {
+        User user = pilotUser("pilot@pedaerial.com", "hashed-password");
+        when(userRepository.findByEmail("pilot@pedaerial.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches(" password123 ", "hashed-password")).thenReturn(true);
+        when(jwtService.generateToken(any(AppUserPrincipal.class))).thenReturn("jwt-token");
+
+        AuthResponse response = authService.login(new AuthLoginRequest("pilot@pedaerial.com", " password123 "));
+
+        assertThat(response.token()).isEqualTo("jwt-token");
+        verify(passwordEncoder).matches(" password123 ", "hashed-password");
+    }
+
+    @Test
     void registerCreatesUserAndReturnsToken() {
         when(userRepository.findByEmail("newpilot@pedaerial.com")).thenReturn(Optional.empty());
         when(passwordEncoder.encode("password123")).thenReturn("hashed-password");

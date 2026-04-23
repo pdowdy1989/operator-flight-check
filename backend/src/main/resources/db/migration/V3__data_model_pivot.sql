@@ -72,8 +72,27 @@ CREATE TABLE IF NOT EXISTS service_catalog (
     updated_at                  TIMESTAMP      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE INDEX IF NOT EXISTS idx_service_catalog_job_type ON service_catalog(job_type);
-CREATE INDEX IF NOT EXISTS idx_service_catalog_active   ON service_catalog(active);
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'service_catalog' AND index_name = 'idx_service_catalog_job_type'),
+        'SELECT 1',
+        'CREATE INDEX idx_service_catalog_job_type ON service_catalog(job_type)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'service_catalog' AND index_name = 'idx_service_catalog_active'),
+        'SELECT 1',
+        'CREATE INDEX idx_service_catalog_active ON service_catalog(active)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ---- 6. job_requests ----------------------------------------
 
@@ -114,8 +133,27 @@ CREATE TABLE IF NOT EXISTS job_requests (
     FOREIGN KEY (created_job_id)       REFERENCES jobs(id)  ON DELETE SET NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_job_requests_requester_id ON job_requests(requester_id);
-CREATE INDEX IF NOT EXISTS idx_job_requests_status       ON job_requests(status);
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'job_requests' AND index_name = 'idx_job_requests_requester_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_job_requests_requester_id ON job_requests(requester_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'job_requests' AND index_name = 'idx_job_requests_status'),
+        'SELECT 1',
+        'CREATE INDEX idx_job_requests_status ON job_requests(status)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ---- 7. job_request_line_items ------------------------------
 
@@ -132,7 +170,16 @@ CREATE TABLE IF NOT EXISTS job_request_line_items (
     FOREIGN KEY (service_catalog_id) REFERENCES service_catalog(id) ON DELETE RESTRICT
 );
 
-CREATE INDEX IF NOT EXISTS idx_jrli_job_request_id ON job_request_line_items(job_request_id);
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'job_request_line_items' AND index_name = 'idx_jrli_job_request_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_jrli_job_request_id ON job_request_line_items(job_request_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 -- ---- 8. agreements ------------------------------------------
 

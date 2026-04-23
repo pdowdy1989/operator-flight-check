@@ -34,7 +34,7 @@ export default function WorkspaceHeader({ items }) {
 
   const fallbackItems = useMemo(
     () =>
-      [{ label: "Dashboard", to: getHomePathForRole(user?.role), icon: "missions" }],
+      [{ label: "Home", to: getHomePathForRole(user?.role), icon: "missions" }],
     [user?.role]
   );
   const actionItems = useMemo(() => items ?? fallbackItems, [fallbackItems, items]);

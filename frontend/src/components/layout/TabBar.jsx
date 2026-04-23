@@ -1,9 +1,9 @@
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useSidebarLayout } from "./SidebarLayoutContext";
 import { useAuth } from "../../context/AuthContext";
+import { getHomePathForRole } from "../../utils/roleRouting";
 
 const PILOT_TABS = [
-  { to: "/dashboard", label: "Dashboard", shortLabel: "Dash", icon: "grid" },
   { to: "/jobs", label: "Jobs", shortLabel: "Jobs", icon: "briefcase" },
   { to: "/documents", label: "Documents", shortLabel: "Docs", icon: "log" },
   { to: "/clients", label: "Clients", shortLabel: "Clients", icon: "users" },
@@ -12,21 +12,18 @@ const PILOT_TABS = [
   { to: "/weather", label: "Weather", shortLabel: "Weather", icon: "cloud" },
 ];
 const COMPANY_TABS = [
-  { to: "/dashboard", label: "Dashboard", shortLabel: "Dash", icon: "grid" },
-  { to: "/request-work", label: "Request Work", shortLabel: "Request", icon: "briefcase" },
   { to: "/my-requests", label: "My Requests", shortLabel: "Requests", icon: "log" },
+  { to: "/request-work", label: "Request Work", shortLabel: "Request", icon: "briefcase" },
   { to: "/archive", label: "Archive", shortLabel: "Archive", icon: "layers" },
   { to: "/profile", label: "Profile", shortLabel: "Profile", icon: "users" },
 ];
 const CLIENT_TABS = [
-  { to: "/dashboard", label: "Dashboard", shortLabel: "Dash", icon: "grid" },
-  { to: "/request-work", label: "Request Work", shortLabel: "Request", icon: "briefcase" },
   { to: "/my-requests", label: "My Requests", shortLabel: "Requests", icon: "log" },
+  { to: "/request-work", label: "Request Work", shortLabel: "Request", icon: "briefcase" },
   { to: "/archive", label: "Archive", shortLabel: "Archive", icon: "layers" },
   { to: "/profile", label: "Profile", shortLabel: "Profile", icon: "users" },
 ];
 const ADMIN_TABS = [
-  { to: "/dashboard", label: "Dashboard", shortLabel: "Dash", icon: "grid" },
   { to: "/jobs", label: "Jobs", shortLabel: "Jobs", icon: "briefcase" },
   { to: "/documents", label: "Documents", shortLabel: "Docs", icon: "log" },
   { to: "/clients", label: "Clients", shortLabel: "Clients", icon: "users" },
@@ -47,6 +44,16 @@ function isActivePath(pathname, to) {
 }
 
 function Icon({ name }) {
+  if (name === "logout") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+        <path d="M16 17l5-5-5-5" />
+        <path d="M21 12H9" />
+      </svg>
+    );
+  }
+
   if (name === "grid") {
     return (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -166,12 +173,12 @@ function Icon({ name }) {
 function linkStyle(active) {
   return active
     ? {
-        background: "var(--brand-blue-muted)",
-        color: "var(--brand-blue)",
-        boxShadow: "0 14px 28px rgba(0, 150, 255, 0.16)",
+        background: "rgba(34,167,255,0.14)",
+        color: "#fff",
+        borderLeft: "2.5px solid #22a7ff",
       }
     : {
-        color: "var(--text-secondary)",
+        color: "rgba(255,255,255,0.65)",
       };
 }
 
@@ -183,7 +190,7 @@ function DesktopNavLink({ item, pathname, isCollapsed }) {
       to={item.to}
       aria-current={active ? "page" : undefined}
       title={isCollapsed ? item.label : undefined}
-      className={`flex min-h-[44px] items-center rounded-xl px-3 py-2.5 font-medium transition-colors hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] ${
+      className={`flex min-h-[44px] items-center rounded-xl px-3 py-2.5 font-semibold transition-all hover:opacity-100 hover:bg-[var(--bg-surface-hover)] ${
         isCollapsed ? "justify-center" : "gap-3"
       }`}
       style={linkStyle(active)}
@@ -191,17 +198,24 @@ function DesktopNavLink({ item, pathname, isCollapsed }) {
       <span className="flex-shrink-0">
         <Icon name={item.icon} />
       </span>
-      {!isCollapsed ? <span className="hidden text-sm lg:inline">{item.label}</span> : null}
+      {!isCollapsed ? <span className="hidden text-[14px] lg:inline">{item.label}</span> : null}
     </NavLink>
   );
 }
 
 export default function TabBar({ overlayMode = false }) {
+  const navigate = useNavigate();
   const location = useLocation();
   const { isCollapsed, setIsCollapsed, setIsSidebarOpen } = useSidebarLayout();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const primaryTabs = getPrimaryTabsForRole(user?.role);
-  const homePath = "/dashboard";
+  const homePath = getHomePathForRole(user?.role);
+
+  function handleLogout() {
+    logout();
+    setIsSidebarOpen(false);
+    navigate("/login", { replace: true });
+  }
 
   return (
     <>
@@ -210,8 +224,10 @@ export default function TabBar({ overlayMode = false }) {
           className="fixed bottom-0 left-0 right-0 z-40 shadow-tab-bar md:hidden"
           aria-label="Primary navigation"
           style={{
-            borderTop: "1px solid var(--border-default)",
-            background: "var(--bg-elevated)",
+            borderTop: "1px solid var(--glass-border)",
+            background: "rgba(18, 18, 28, 0.84)",
+            backdropFilter: "blur(16px)",
+            WebkitBackdropFilter: "blur(16px)",
           }}
         >
           <div className="flex gap-2 overflow-x-auto px-2 py-2">
@@ -224,13 +240,26 @@ export default function TabBar({ overlayMode = false }) {
                   to={tab.to}
                   aria-current={active ? "page" : undefined}
                   className="flex min-w-[88px] flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 text-center transition-colors hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
-                  style={active ? { background: "var(--brand-blue-muted)", color: "var(--brand-blue)" } : { color: "var(--text-secondary)" }}
+                  style={
+                    active
+                      ? { background: "var(--brand-blue-muted)", color: "var(--brand-blue)", border: "1px solid rgba(34,167,255,0.2)" }
+                      : { color: "var(--text-primary)", opacity: 0.65 }
+                  }
                 >
                   <Icon name={tab.icon} />
                   <span className="text-[10px] font-semibold leading-none">{tab.shortLabel}</span>
                 </NavLink>
               );
             })}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex min-w-[88px] flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 text-center transition-colors hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              <Icon name="logout" />
+              <span className="text-[10px] font-semibold leading-none">Logout</span>
+            </button>
           </div>
         </nav>
       ) : null}
@@ -253,25 +282,48 @@ export default function TabBar({ overlayMode = false }) {
         } ${isCollapsed && !overlayMode ? "w-20 lg:w-24" : overlayMode ? "" : "w-20 lg:w-64"} flex-col transition-[width] duration-300`}
         aria-label="Main navigation"
         style={{
-          background: "var(--bg-elevated)",
-          borderColor: "var(--border-default)",
+          background: "linear-gradient(180deg, rgba(10,10,20,0.98) 0%, rgba(14,12,26,0.97) 100%)",
+          borderColor: "rgba(255,255,255,0.07)",
           color: "var(--text-primary)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          boxShadow: overlayMode ? "0 24px 60px rgba(0,0,0,0.5)" : "4px 0 32px rgba(0,0,0,0.4)",
         }}
       >
         <div
-          className={`px-4 py-4 ${isCollapsed ? "lg:px-3" : ""}`}
-          style={{ borderBottom: "1px solid var(--border-default)" }}
+          className={`px-3 py-3 ${isCollapsed ? "lg:px-3" : ""}`}
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
         >
-          <div className={`flex items-center ${overlayMode ? "justify-between gap-3" : isCollapsed ? "justify-center" : "justify-between gap-3"}`}>
-            <Link
-              to={homePath}
-              className="font-bold text-sm tracking-tight transition-opacity hover:opacity-85 lg:text-base"
-              style={{ color: "var(--brand-orange)" }}
+          <div className={`flex items-center gap-3 ${isCollapsed && !overlayMode ? "justify-center" : "justify-between"}`}>
+            {/* Avatar — always visible */}
+            <div
+              className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl text-[13px] font-bold"
+              style={{
+                background: "linear-gradient(135deg, #7c3aed 0%, #06b6d4 100%)",
+                color: "#fff",
+                boxShadow: "0 4px 14px rgba(124,58,237,0.35)",
+              }}
             >
-              <span className="lg:hidden">PA</span>
-              <span className={isCollapsed && !overlayMode ? "hidden" : "hidden lg:inline"}>PED AERIAL</span>
-              <span className={isCollapsed && !overlayMode ? "hidden lg:inline" : "hidden"}>PA</span>
-            </Link>
+              {user?.firstName?.[0] ?? user?.email?.[0]?.toUpperCase() ?? "?"}
+            </div>
+
+            {/* Name + email — hidden when collapsed */}
+            {!isCollapsed || overlayMode ? (
+              <div className="min-w-0 flex-1 hidden lg:block">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] leading-none mb-1" style={{ color: "rgba(255,255,255,0.35)" }}>
+                  Account
+                </p>
+                <p className="text-[13px] font-semibold truncate leading-tight" style={{ color: "rgba(255,255,255,0.9)" }}>
+                  {user
+                    ? (user.firstName || user.lastName)
+                      ? `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim()
+                      : (user.email ?? "")
+                    : ""}
+                </p>
+              </div>
+            ) : null}
+
+            <div>
             {overlayMode ? (
               <button
                 type="button"
@@ -279,8 +331,8 @@ export default function TabBar({ overlayMode = false }) {
                 className="inline-flex h-9 w-9 items-center justify-center rounded-xl transition hover:bg-[var(--bg-surface-hover)]"
                 aria-label="Close navigation"
                 style={{
-                  border: "1px solid var(--border-default)",
-                  background: "var(--bg-surface)",
+                  border: "1px solid var(--glass-border)",
+                  background: "rgba(255, 255, 255, 0.06)",
                   color: "var(--text-primary)",
                 }}
               >
@@ -297,8 +349,8 @@ export default function TabBar({ overlayMode = false }) {
                 aria-label={isCollapsed ? "Expand navigation" : "Collapse navigation"}
                 title={isCollapsed ? "Expand navigation" : "Collapse navigation"}
                 style={{
-                  border: "1px solid var(--border-default)",
-                  background: "var(--bg-surface)",
+                  border: "1px solid var(--glass-border)",
+                  background: "rgba(255, 255, 255, 0.06)",
                   color: "var(--text-primary)",
                 }}
               >
@@ -321,13 +373,13 @@ export default function TabBar({ overlayMode = false }) {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-2 py-3">
-          <div className="mb-5">
+        <div className="flex-1 overflow-y-auto px-2 py-4">
+          <div className="mb-2">
             <p
-              className={`px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.24em] ${
+              className={`px-3 pb-2 text-[10px] font-bold uppercase tracking-[0.28em] ${
                 isCollapsed && !overlayMode ? "hidden" : "hidden lg:block"
               }`}
-              style={{ color: "var(--text-muted)" }}
+              style={{ color: "rgba(255,255,255,0.28)" }}
             >
               Workspace
             </p>
@@ -342,6 +394,33 @@ export default function TabBar({ overlayMode = false }) {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="px-2 pb-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          <div
+            className={`px-3 pt-3 pb-2 ${isCollapsed && !overlayMode ? "hidden" : "hidden lg:block"}`}
+          >
+            <span
+              className="text-[11px] font-black tracking-[0.3em] uppercase"
+              style={{ background: "linear-gradient(90deg,#fb8b3b,#f472b6)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+            >
+              PED AERIAL
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title={isCollapsed && !overlayMode ? "Log out" : undefined}
+            className={`flex min-h-[44px] w-full items-center rounded-xl px-3 py-2.5 font-semibold transition-all hover:bg-[rgba(255,255,255,0.06)] hover:opacity-100 ${
+              isCollapsed && !overlayMode ? "justify-center" : "gap-3"
+            }`}
+            style={{ color: "rgba(255,255,255,0.45)" }}
+          >
+            <span className="flex-shrink-0">
+              <Icon name="logout" />
+            </span>
+            {isCollapsed && !overlayMode ? null : <span className="hidden text-[14px] lg:inline">Log out</span>}
+          </button>
         </div>
       </nav>
     </>

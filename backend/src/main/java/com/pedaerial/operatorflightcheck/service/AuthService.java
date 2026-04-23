@@ -11,11 +11,15 @@ import com.pedaerial.operatorflightcheck.exception.UnauthorizedException;
 import com.pedaerial.operatorflightcheck.repository.UserRepository;
 import com.pedaerial.operatorflightcheck.security.AppUserPrincipal;
 import com.pedaerial.operatorflightcheck.security.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -32,10 +36,19 @@ public class AuthService {
     }
 
     public AuthResponse login(AuthLoginRequest request) {
-        User user = userRepository.findByEmail(request.email().trim().toLowerCase())
-            .orElseThrow(() -> new UnauthorizedException("Invalid email or password."));
+        String normalizedEmail = request.email().trim().toLowerCase();
+        User user = userRepository.findByEmail(normalizedEmail)
+            .orElseThrow(() -> {
+                log.debug("Login attempt rejected for email={}", normalizedEmail);
+                return new UnauthorizedException("Invalid email or password.");
+            });
 
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
+        log.debug("Login attempt resolved user email={}, id={}", user.getEmail(), user.getId());
+
+        String storedHash = user.getPasswordHash() == null ? null : user.getPasswordHash().trim();
+        boolean passwordMatches = storedHash != null && passwordEncoder.matches(request.password(), storedHash);
+
+        if (!passwordMatches) {
             throw new UnauthorizedException("Invalid email or password.");
         }
 

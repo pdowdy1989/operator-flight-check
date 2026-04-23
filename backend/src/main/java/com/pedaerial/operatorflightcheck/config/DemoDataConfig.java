@@ -51,6 +51,11 @@ public class DemoDataConfig {
                 "insurance@pedaerial.com", "Password123", Role.COMPANY,
                 "David", "Carter", "Apex Claims & Adjusting", null
             );
+            User companyUser = upsertUser(
+                userRepository, passwordEncoder,
+                "company@pedaerial.com", "Password123", Role.COMPANY,
+                "David", "Carter", "Apex Claims & Adjusting", null
+            );
 
             if (!invoiceRepository.findByPilotIdOrderByCreatedAtDesc(pilot.getId()).isEmpty()) {
                 return;

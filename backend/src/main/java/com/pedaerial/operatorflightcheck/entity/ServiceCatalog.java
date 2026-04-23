@@ -25,6 +25,12 @@ public class ServiceCatalog {
     @Column(name = "job_type", nullable = false, length = 30)
     private JobType jobType;
 
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    @Column(nullable = false, length = 30)
+    private ServiceCategory category = ServiceCategory.OTHER;
+
     @NotBlank
     @Size(max = 100)
     @Column(nullable = false, length = 100)

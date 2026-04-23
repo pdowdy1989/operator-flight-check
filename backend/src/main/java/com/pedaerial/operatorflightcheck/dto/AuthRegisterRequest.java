@@ -22,7 +22,6 @@ public record AuthRegisterRequest(
 ) {
     public AuthRegisterRequest {
         if (email != null) email = email.trim();
-        if (password != null) password = password.trim();
         if (role != null) role = role.trim();
         if (firstName != null) firstName = firstName.trim();
         if (lastName != null) lastName = lastName.trim();

@@ -29,7 +29,7 @@ import lombok.Setter;
 public class User {
 
     @Id
-    @Column(nullable = false, updatable = false, length = 36)
+    @Column(nullable = false, updatable = false, columnDefinition = "CHAR(36)")
     private String id;
 
     @Email

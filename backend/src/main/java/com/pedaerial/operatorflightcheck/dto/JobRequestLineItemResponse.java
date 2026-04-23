@@ -5,9 +5,10 @@ import java.util.UUID;
 
 public record JobRequestLineItemResponse(
     UUID id,
-    UUID serviceCatalogId,
+    UUID pilotServiceId,
     String serviceNameSnapshot,
     BigDecimal unitPriceSnapshot,
+    String pricingTypeSnapshot,
     Integer quantity,
     BigDecimal amount,
     Integer sortOrder

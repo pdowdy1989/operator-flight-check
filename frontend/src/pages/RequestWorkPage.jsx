@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useReducer, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PageShell from '../components/ui/PageShell';
+import AddressFields from '../components/ui/AddressFields';
 import RateCardPicker from '../components/features/RateCardPicker';
 import BudgetOverrideField from '../components/features/BudgetOverrideField';
 import InsuranceFieldsAccordion from '../components/features/InsuranceFieldsAccordion';
@@ -22,24 +23,64 @@ function getDiscountPercent(totalQty) {
   return 0;
 }
 
+const initialRequestState = {
+  selectedItems: [],
+  siteAddress: '',
+  preferredDate: '',
+  preferredTime: '',
+  isRecurring: false,
+  recurrencePattern: '',
+  notes: '',
+  proposedBudget: null,
+  insuranceFields: {},
+  submitting: false,
+  error: null,
+  validationErrors: {},
+};
+
+function requestReducer(state, action) {
+  switch (action.type) {
+    case 'FIELD_CHANGE':
+      return { ...state, [action.field]: action.value };
+    case 'INSURANCE_FIELD_CHANGE':
+      return {
+        ...state,
+        insuranceFields: { ...state.insuranceFields, [action.field]: action.value },
+      };
+    case 'VALIDATION_ERROR':
+      return { ...state, validationErrors: action.errors };
+    case 'SUBMIT_START':
+      return { ...state, submitting: true, error: null, validationErrors: {} };
+    case 'SUBMIT_SUCCESS':
+      return { ...state, submitting: false };
+    case 'SUBMIT_ERROR':
+      return { ...state, submitting: false, error: action.message };
+    case 'RESET':
+      return initialRequestState;
+    default:
+      return state;
+  }
+}
+
 export default function RequestWorkPage() {
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [validationErrors, setValidationErrors] = useState({});
-
-  // Form state
-  const [selectedItems, setSelectedItems] = useState([]);
-  const [siteAddress, setSiteAddress] = useState('');
-  const [preferredDate, setPreferredDate] = useState('');
-  const [preferredTime, setPreferredTime] = useState('');
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [recurrencePattern, setRecurrencePattern] = useState('');
-  const [notes, setNotes] = useState('');
-  const [proposedBudget, setProposedBudget] = useState(null);
-  const [insuranceFields, setInsuranceFields] = useState({});
+  const [requestState, dispatch] = useReducer(requestReducer, initialRequestState);
+  const {
+    selectedItems,
+    siteAddress,
+    preferredDate,
+    preferredTime,
+    isRecurring,
+    recurrencePattern,
+    notes,
+    proposedBudget,
+    insuranceFields,
+    submitting,
+    error,
+    validationErrors,
+  } = requestState;
 
   useEffect(() => {
     serviceCatalogService.getActiveCatalog()
@@ -58,7 +99,7 @@ export default function RequestWorkPage() {
   const finalAmount = rateCardTotal - savings;
 
   const handleInsuranceChange = (field, value) => {
-    setInsuranceFields(prev => ({ ...prev, [field]: value }));
+    dispatch({ type: 'INSURANCE_FIELD_CHANGE', field, value });
   };
 
   const validate = () => {
@@ -72,12 +113,10 @@ export default function RequestWorkPage() {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length > 0) {
-      setValidationErrors(errs);
+      dispatch({ type: 'VALIDATION_ERROR', errors: errs });
       return;
     }
-    setValidationErrors({});
-    setError(null);
-    setSubmitting(true);
+    dispatch({ type: 'SUBMIT_START' });
 
     const payload = {
       lineItems: selectedItems.map(i => ({ serviceCatalogId: i.serviceId, quantity: i.quantity })),
@@ -104,11 +143,13 @@ export default function RequestWorkPage() {
 
     try {
       const result = await jobRequestsService.submitRequest(payload);
+      dispatch({ type: 'SUBMIT_SUCCESS' });
       navigate(`/my-requests/${result.id}`, { state: { successMessage: 'Request submitted successfully!' } });
     } catch (err) {
-      setError(err?.response?.data?.message || err?.message || 'Failed to submit request. Please try again.');
-    } finally {
-      setSubmitting(false);
+      dispatch({
+        type: 'SUBMIT_ERROR',
+        message: err?.response?.data?.message || err?.message || 'Failed to submit request. Please try again.',
+      });
     }
   };
 
@@ -125,7 +166,7 @@ export default function RequestWorkPage() {
             <RateCardPicker
               availableServices={services}
               selectedItems={selectedItems}
-              onChange={setSelectedItems}
+              onChange={value => dispatch({ type: 'FIELD_CHANGE', field: 'selectedItems', value })}
             />
           </section>
 
@@ -134,15 +175,12 @@ export default function RequestWorkPage() {
             <h2 className="rw-section__title">2. Job Details</h2>
             <div className="rw-fields-grid">
               <div className="rw-field rw-field--full">
-                <label htmlFor="siteAddress">Site Address *</label>
-                <input
-                  id="siteAddress"
-                  type="text"
-                  value={siteAddress}
-                  onChange={e => setSiteAddress(e.target.value)}
-                  placeholder="123 Main St, City, State"
+                <label>Site Address *</label>
+                <AddressFields
+                  required
+                  onChange={value => dispatch({ type: 'FIELD_CHANGE', field: 'siteAddress', value })}
+                  error={validationErrors.siteAddress}
                 />
-                {validationErrors.siteAddress && <p className="rw-error">{validationErrors.siteAddress}</p>}
               </div>
               <div className="rw-field">
                 <label htmlFor="preferredDate">Preferred Date</label>
@@ -150,7 +188,7 @@ export default function RequestWorkPage() {
                   id="preferredDate"
                   type="date"
                   value={preferredDate}
-                  onChange={e => setPreferredDate(e.target.value)}
+                  onChange={e => dispatch({ type: 'FIELD_CHANGE', field: 'preferredDate', value: e.target.value })}
                 />
               </div>
               <div className="rw-field">
@@ -159,7 +197,7 @@ export default function RequestWorkPage() {
                   id="preferredTime"
                   type="time"
                   value={preferredTime}
-                  onChange={e => setPreferredTime(e.target.value)}
+                  onChange={e => dispatch({ type: 'FIELD_CHANGE', field: 'preferredTime', value: e.target.value })}
                 />
               </div>
               <div className="rw-field rw-field--checkbox">
@@ -167,7 +205,7 @@ export default function RequestWorkPage() {
                   <input
                     type="checkbox"
                     checked={isRecurring}
-                    onChange={e => setIsRecurring(e.target.checked)}
+                    onChange={e => dispatch({ type: 'FIELD_CHANGE', field: 'isRecurring', value: e.target.checked })}
                   />
                   <span>Recurring job</span>
                 </label>
@@ -178,7 +216,7 @@ export default function RequestWorkPage() {
                   <select
                     id="recurrencePattern"
                     value={recurrencePattern}
-                    onChange={e => setRecurrencePattern(e.target.value)}
+                    onChange={e => dispatch({ type: 'FIELD_CHANGE', field: 'recurrencePattern', value: e.target.value })}
                   >
                     <option value="">-- Select --</option>
                     {RECURRENCE_OPTIONS.map(o => (
@@ -193,7 +231,7 @@ export default function RequestWorkPage() {
                   id="notes"
                   rows={3}
                   value={notes}
-                  onChange={e => setNotes(e.target.value)}
+                  onChange={e => dispatch({ type: 'FIELD_CHANGE', field: 'notes', value: e.target.value })}
                   placeholder="Any additional details about the job..."
                 />
               </div>
@@ -231,7 +269,7 @@ export default function RequestWorkPage() {
                     totalQuantity={totalQty}
                     finalAmount={finalAmount}
                     value={proposedBudget}
-                    onChange={setProposedBudget}
+                    onChange={value => dispatch({ type: 'FIELD_CHANGE', field: 'proposedBudget', value })}
                   />
                 </div>
               </div>

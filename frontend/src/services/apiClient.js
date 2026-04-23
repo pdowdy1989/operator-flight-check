@@ -1,8 +1,12 @@
 import axios from "axios";
 import { AUTH_STORAGE_KEY, removeStorage } from "../utils/authStorage";
 
+const resolvedApiBaseUrl = (
+  import.meta.env.VITE_API_URL ?? "http://localhost:8081/api"
+).replace(/\/+$/, "");
+
 export const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? "http://localhost:8081/api",
+  baseURL: resolvedApiBaseUrl,
   headers: {
     "Content-Type": "application/json",
   },

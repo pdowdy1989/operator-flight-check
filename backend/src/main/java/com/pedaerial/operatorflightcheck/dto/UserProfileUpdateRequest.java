@@ -1,6 +1,7 @@
 package com.pedaerial.operatorflightcheck.dto;
 
 import com.pedaerial.operatorflightcheck.entity.PaymentTerms;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,6 +13,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UserProfileUpdateRequest {
+
+    @Email
+    @Size(max = 255)
+    private String email;
 
     @Size(max = 100)
     private String firstName;

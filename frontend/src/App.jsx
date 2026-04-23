@@ -22,8 +22,6 @@ import InvoicesPage from "./pages/InvoicesPage";
 import WeatherPage from "./pages/WeatherPage";
 
 // Pages — protected (client / company)
-import ClientDashboardPage from "./pages/ClientDashboardPage";
-import CompanyDashboardPage from "./pages/CompanyDashboardPage";
 import RequestWorkPage from "./pages/RequestWorkPage";
 import MyRequestsPage from "./pages/MyRequestsPage";
 import RequestDetailPage from "./pages/RequestDetailPage";
@@ -32,16 +30,9 @@ import ProfilePage from "./pages/ProfilePage";
 import PaymentResultPage from "./pages/PaymentResultPage";
 
 const PROTECTED_ROUTES = [
-  "/dashboard", "/jobs", "/documents", "/clients", "/drones", "/invoices", "/weather",
+  "/jobs", "/documents", "/clients", "/drones", "/invoices", "/weather",
   "/request-work", "/my-requests", "/archive", "/profile", "/payment",
 ];
-
-function DashboardRedirect() {
-  const { user } = useAuth();
-  if (user?.role === "COMPANY") return <CompanyDashboardPage />;
-  if (user?.role === "CLIENT") return <ClientDashboardPage />;
-  return <PilotDashboardPage />;
-}
 
 function AppShell({ children }) {
   const { isAuthenticated } = useAuth();
@@ -95,7 +86,6 @@ export default function App() {
 
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/jobs" element={<PilotDashboardPage />} />
           <Route path="/jobs/new" element={<NewJobPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />

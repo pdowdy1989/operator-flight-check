@@ -27,7 +27,7 @@ public class JobRequestService {
 
     private final JobRequestRepository jobRequestRepository;
     private final JobRequestLineItemRepository jobRequestLineItemRepository;
-    private final ServiceCatalogRepository serviceCatalogRepository;
+    private final PilotServiceRepository pilotServiceRepository;
     private final UserRepository userRepository;
     private final ClientRepository clientRepository;
     private final JobRepository jobRepository;
@@ -49,16 +49,16 @@ public class JobRequestService {
         BigDecimal rateCardTotal = BigDecimal.ZERO;
         int totalQuantity = 0;
 
-        List<ServiceCatalog> loadedServices = new ArrayList<>();
+        List<PilotService> loadedServices = new ArrayList<>();
         for (var li : req.getLineItems()) {
-            ServiceCatalog sc = serviceCatalogRepository.findById(li.getServiceCatalogId())
-                .orElseThrow(() -> new BadRequestException("Service not found: " + li.getServiceCatalogId()));
-            if (!sc.getActive()) {
-                throw new BadRequestException("Service is not active: " + sc.getName());
+            PilotService ps = pilotServiceRepository.findById(li.getPilotServiceId())
+                .orElseThrow(() -> new BadRequestException("Service not found: " + li.getPilotServiceId()));
+            if (!ps.getActive()) {
+                throw new BadRequestException("Service is not active: " + ps.getDisplayName());
             }
-            loadedServices.add(sc);
+            loadedServices.add(ps);
             totalQuantity += li.getQuantity();
-            rateCardTotal = rateCardTotal.add(sc.getBasePrice().multiply(BigDecimal.valueOf(li.getQuantity())));
+            rateCardTotal = rateCardTotal.add(ps.getEffectiveUnitPrice().multiply(BigDecimal.valueOf(li.getQuantity())));
         }
 
         // Discount tiers by total quantity
@@ -121,13 +121,15 @@ public class JobRequestService {
         // Build line items
         for (int i = 0; i < req.getLineItems().size(); i++) {
             var li = req.getLineItems().get(i);
-            ServiceCatalog sc = loadedServices.get(i);
-            BigDecimal amount = sc.getBasePrice().multiply(BigDecimal.valueOf(li.getQuantity()));
+            PilotService ps = loadedServices.get(i);
+            BigDecimal unitPrice = ps.getEffectiveUnitPrice();
+            BigDecimal amount = unitPrice.multiply(BigDecimal.valueOf(li.getQuantity()));
             JobRequestLineItem lineItem = JobRequestLineItem.builder()
                 .jobRequest(savedRequest)
-                .service(sc)
-                .serviceNameSnapshot(sc.getName())
-                .unitPriceSnapshot(sc.getBasePrice())
+                .pilotService(ps)
+                .serviceNameSnapshot(ps.getDisplayName())
+                .unitPriceSnapshot(unitPrice)
+                .pricingTypeSnapshot(ps.getPricingType().name())
                 .quantity(li.getQuantity())
                 .amount(amount)
                 .sortOrder(i)
@@ -183,7 +185,7 @@ public class JobRequestService {
 
         // Determine job type from first line item
         JobType jobType = jr.getLineItems().isEmpty() ? JobType.OTHER
-            : jr.getLineItems().get(0).getService().getJobType();
+            : jr.getLineItems().get(0).getPilotService().getJobType();
 
         // Create Job
         Job job = Job.builder()

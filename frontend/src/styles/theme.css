@@ -1,133 +1,155 @@
 :root {
-  /* ── Aliases used by page CSS files ───────────────────────────── */
-  --color-text:         var(--text-primary);
-  --color-text-muted:   var(--text-muted);
-  --color-surface:      var(--bg-surface);
-  --color-surface-raised: var(--bg-elevated);
-  --color-border:       var(--border-default);
-  --color-primary:      var(--brand-blue);
+  --bg-primary: #0a0a0f;
+  --bg-secondary: rgba(18, 18, 28, 0.76);
+  --bg-tertiary: rgba(28, 28, 44, 0.82);
+  --bg-elevated: rgba(20, 20, 32, 0.9);
+  --bg-surface-hover: rgba(255, 255, 255, 0.08);
+  --bg-input: rgba(10, 10, 18, 0.72);
+  --bg-overlay: rgba(3, 6, 14, 0.64);
 
-  --space-1:  4px;
-  --space-2:  8px;
-  --space-3:  12px;
-  --space-4:  16px;
-  --space-5:  20px;
-  --space-6:  24px;
-  --space-8:  32px;
-  --space-12: 48px;
-  /* ─────────────────────────────────────────────────────────────── */
+  --text-primary: #ffffff;
+  --text-secondary: #c7cae3;
+  --text-muted: #8f96bc;
+  --text-inverse: #0d1020;
 
-  --bg-base: #2a2d35;
-  --bg-surface: #1e2028;
-  --bg-surface-hover: #252830;
-  --bg-elevated: #161820;
-  --bg-input: #1a1d24;
-  --bg-overlay: rgba(0, 0, 0, 0.5);
+  --accent-purple: #8b5cf6;
+  --accent-pink: #ec4899;
+  --accent-blue: #06b6d4;
+  --accent-cyan: #67e8f9;
+  --accent-lime: #4ade80;
+  --accent-amber: #f59e0b;
+  --accent-rose: #fb7185;
 
-  --text-primary: #f0f0f0;
-  --text-secondary: #9ca3af;
-  --text-muted: #6b7280;
-  --text-inverse: #1a1a1a;
+  --brand-orange: var(--accent-pink);
+  --brand-blue: var(--accent-blue);
+  --brand-blue-hover: var(--accent-cyan);
+  --brand-blue-muted: rgba(6, 182, 212, 0.16);
 
-  --brand-orange: #f97316;
-  --brand-blue: #0096ff;
-  --brand-blue-hover: #38b6ff;
-  --brand-blue-muted: rgba(0, 150, 255, 0.15);
+  --status-green: #4ade80;
+  --status-yellow: #fbbf24;
+  --status-red: #fb7185;
+  --status-green-bg: rgba(74, 222, 128, 0.14);
+  --status-yellow-bg: rgba(251, 191, 36, 0.16);
+  --status-red-bg: rgba(251, 113, 133, 0.16);
 
-  --status-green: #22c55e;
-  --status-yellow: #f59e0b;
-  --status-red: #ef4444;
-  --status-green-bg: rgba(34, 197, 94, 0.12);
-  --status-yellow-bg: rgba(245, 158, 11, 0.12);
-  --status-red-bg: rgba(239, 68, 68, 0.12);
-
+  --glass-border: rgba(255, 255, 255, 0.1);
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-default: rgba(255, 255, 255, 0.1);
-  --border-hover: rgba(255, 255, 255, 0.18);
-  --border-focus: var(--brand-blue);
+  --border-hover: rgba(255, 255, 255, 0.2);
+  --border-focus: rgba(103, 232, 249, 0.72);
 
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 12px;
-  --space-lg: 16px;
-  --space-xl: 24px;
-  --space-2xl: 32px;
+  --space-lg: 18px;
+  --space-xl: 26px;
+  --space-2xl: 36px;
 
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
   --radius-full: 9999px;
+  --card-radius: 1.5rem;
 
-  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: "Plus Jakarta Sans", "Inter", "DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: "JetBrains Mono", "Fira Code", monospace;
 
   --text-xs: 11px;
   --text-sm: 13px;
   --text-base: 14px;
-  --text-lg: 16px;
-  --text-xl: 20px;
-  --text-2xl: 24px;
+  --text-lg: 17px;
+  --text-xl: 21px;
+  --text-2xl: 26px;
   --text-3xl: 32px;
 
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 10px 24px rgba(0, 0, 0, 0.18);
+  --shadow-md: 0 20px 44px rgba(1, 4, 20, 0.32);
+  --shadow-lg: 0 32px 74px rgba(1, 4, 20, 0.48);
+  --shadow-glow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 22px 80px rgba(9, 16, 38, 0.48);
 
   --transition-fast: 150ms ease;
-  --transition-base: 200ms ease;
-  --transition-slow: 300ms ease;
+  --transition-base: 220ms ease;
+  --transition-slow: 320ms cubic-bezier(0.22, 1, 0.36, 1);
 
-  --dashboard-glow-blue: rgba(0, 150, 255, 0.14);
-  --dashboard-glow-orange: rgba(249, 115, 22, 0.1);
-  --dashboard-card-overlay: rgba(255, 255, 255, 0.03);
-  --dashboard-map-overlay: rgba(22, 24, 32, 0.88);
-  --dashboard-map-overlay-strong: rgba(22, 24, 32, 0.94);
-  --dashboard-marker-ring: rgba(0, 150, 255, 0.28);
+  --dashboard-glow-blue: rgba(6, 182, 212, 0.18);
+  --dashboard-glow-orange: rgba(236, 72, 153, 0.18);
+  --dashboard-card-overlay: rgba(255, 255, 255, 0.04);
+  --dashboard-map-overlay: rgba(12, 14, 26, 0.8);
+  --dashboard-map-overlay-strong: rgba(12, 14, 26, 0.92);
+  --dashboard-marker-ring: rgba(139, 92, 246, 0.28);
   --dashboard-shimmer-start: rgba(255, 255, 255, 0.04);
-  --dashboard-shimmer-mid: rgba(255, 255, 255, 0.1);
+  --dashboard-shimmer-mid: rgba(255, 255, 255, 0.14);
+
+  --bg-base: var(--bg-primary);
+  --bg-surface: var(--bg-secondary);
+
+  --color-text: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-surface: var(--bg-surface);
+  --color-surface-raised: var(--bg-elevated);
+  --color-border: var(--border-default);
+  --color-primary: var(--brand-blue);
 }
 
 [data-theme="light"] {
-  --color-text:           var(--text-primary);
-  --color-text-muted:     var(--text-muted);
-  --color-surface:        var(--bg-surface);
-  --color-surface-raised: var(--bg-elevated);
-  --color-border:         var(--border-default);
-  --color-primary:        var(--brand-blue);
+  --bg-primary: #f4f7ff;
+  --bg-secondary: rgba(255, 255, 255, 0.74);
+  --bg-tertiary: rgba(248, 249, 255, 0.92);
+  --bg-elevated: rgba(255, 255, 255, 0.9);
+  --bg-surface-hover: rgba(82, 101, 255, 0.08);
+  --bg-input: rgba(255, 255, 255, 0.82);
+  --bg-overlay: rgba(90, 98, 136, 0.18);
 
-  --bg-base: #eef2f7;
-  --bg-surface: #ffffff;
-  --bg-surface-hover: #f5f7fb;
-  --bg-elevated: #ffffff;
-  --bg-input: #ffffff;
-  --bg-overlay: rgba(15, 23, 42, 0.2);
-
-  --text-primary: #172033;
-  --text-secondary: #52607a;
-  --text-muted: #76839c;
+  --text-primary: #101427;
+  --text-secondary: #4c567b;
+  --text-muted: #7b84a8;
   --text-inverse: #ffffff;
 
-  --brand-blue-muted: rgba(0, 150, 255, 0.12);
+  --brand-blue-muted: rgba(6, 182, 212, 0.12);
 
-  --status-green-bg: rgba(34, 197, 94, 0.14);
-  --status-yellow-bg: rgba(245, 158, 11, 0.14);
-  --status-red-bg: rgba(239, 68, 68, 0.14);
+  --status-green: #16a34a;
+  --status-yellow: #d97706;
+  --status-red: #e11d48;
+  --status-green-bg: rgba(34, 197, 94, 0.12);
+  --status-yellow-bg: rgba(245, 158, 11, 0.12);
+  --status-red-bg: rgba(244, 63, 94, 0.12);
 
-  --border-subtle: rgba(15, 23, 42, 0.06);
-  --border-default: rgba(15, 23, 42, 0.12);
-  --border-hover: rgba(15, 23, 42, 0.18);
+  --glass-border: rgba(82, 91, 135, 0.14);
+  --border-subtle: rgba(82, 91, 135, 0.08);
+  --border-default: rgba(82, 91, 135, 0.12);
+  --border-hover: rgba(82, 91, 135, 0.24);
+  --border-focus: rgba(6, 182, 212, 0.48);
 
-  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --shadow-md: 0 8px 20px rgba(15, 23, 42, 0.08);
-  --shadow-lg: 0 14px 36px rgba(15, 23, 42, 0.12);
+  --shadow-sm: 0 8px 20px rgba(56, 64, 107, 0.08);
+  --shadow-md: 0 18px 40px rgba(56, 64, 107, 0.12);
+  --shadow-lg: 0 30px 64px rgba(56, 64, 107, 0.18);
+  --shadow-glow: 0 0 0 1px rgba(139, 92, 246, 0.08), 0 24px 48px rgba(104, 118, 201, 0.16);
 
-  --dashboard-glow-blue: rgba(0, 150, 255, 0.08);
-  --dashboard-glow-orange: rgba(249, 115, 22, 0.08);
-  --dashboard-card-overlay: rgba(15, 23, 42, 0.02);
-  --dashboard-map-overlay: rgba(255, 255, 255, 0.9);
-  --dashboard-map-overlay-strong: rgba(255, 255, 255, 0.94);
-  --dashboard-marker-ring: rgba(0, 150, 255, 0.22);
-  --dashboard-shimmer-start: rgba(15, 23, 42, 0.04);
-  --dashboard-shimmer-mid: rgba(15, 23, 42, 0.08);
+  --dashboard-glow-blue: rgba(6, 182, 212, 0.12);
+  --dashboard-glow-orange: rgba(236, 72, 153, 0.12);
+  --dashboard-card-overlay: rgba(255, 255, 255, 0.5);
+  --dashboard-map-overlay: rgba(255, 255, 255, 0.75);
+  --dashboard-map-overlay-strong: rgba(255, 255, 255, 0.9);
+  --dashboard-marker-ring: rgba(139, 92, 246, 0.18);
+  --dashboard-shimmer-start: rgba(139, 92, 246, 0.04);
+  --dashboard-shimmer-mid: rgba(6, 182, 212, 0.12);
+
+  --bg-base: var(--bg-primary);
+  --bg-surface: var(--bg-secondary);
+
+  --color-text: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-surface: var(--bg-surface);
+  --color-surface-raised: var(--bg-elevated);
+  --color-border: var(--border-default);
+  --color-primary: var(--brand-blue);
 }

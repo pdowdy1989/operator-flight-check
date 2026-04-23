@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import PageShell from '../components/ui/PageShell';
 import profileService from '../services/profileService';
+import { AUTH_STORAGE_KEY, readJsonStorage, writeJsonStorage } from '../utils/authStorage';
 import './ProfilePage.css';
-
-const LOSS_TYPES = ['STORM', 'FIRE', 'WATER', 'WIND', 'HAIL', 'VANDALISM', 'OTHER'];
-const PROPERTY_TYPES = ['RESIDENTIAL', 'COMMERCIAL', 'INDUSTRIAL', 'AGRICULTURAL'];
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState(null);
@@ -34,9 +32,15 @@ export default function ProfilePage() {
     setSuccessMsg(null);
     setErrorMsg(null);
 
-    // Only send non-null changed fields
+    // Only send the fields UserProfileUpdateRequest accepts
+    const ALLOWED_FIELDS = [
+      'email', 'firstName', 'lastName', 'phone', 'company', 'licenseNumber',
+      'businessName', 'ein', 'paymentTerms',
+      'billingAddress', 'billingCity', 'billingState', 'billingZip',
+      'insurancePolicyNumber', 'insuranceCompanyName',
+    ];
     const payload = {};
-    Object.keys(form).forEach(key => {
+    ALLOWED_FIELDS.forEach(key => {
       if (form[key] !== '' && form[key] != null) {
         payload[key] = form[key];
       }
@@ -46,9 +50,21 @@ export default function ProfilePage() {
       const updated = await profileService.updateMyProfile(payload);
       setProfile(updated);
       setForm(updated || form);
+      const storedSession = readJsonStorage(AUTH_STORAGE_KEY, null);
+
+      if (storedSession?.token) {
+        writeJsonStorage(AUTH_STORAGE_KEY, {
+          ...storedSession,
+          email: updated.email,
+        });
+      }
+
       setSuccessMsg('Profile updated successfully.');
     } catch (err) {
-      setErrorMsg(err?.response?.data?.message || 'Failed to update profile.');
+      const status = err?.response?.status;
+      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message;
+      setErrorMsg(msg ? `Error ${status ?? ''}: ${msg}`.trim() : 'Failed to update profile. Check the browser console for details.');
+      console.error('Profile update failed:', err?.response ?? err);
     } finally {
       setSaving(false);
     }
@@ -77,10 +93,10 @@ export default function ProfilePage() {
                 <label>Last Name</label>
                 <input value={form.lastName || ''} onChange={handleChange('lastName')} />
               </div>
-              <div className="prof-field">
-                <label>Email</label>
-                <input type="email" value={form.email || ''} onChange={handleChange('email')} />
-              </div>
+                <div className="prof-field">
+                  <label>Email</label>
+                  <input type="email" value={form.email || ''} onChange={handleChange('email')} />
+                </div>
               <div className="prof-field">
                 <label>Phone</label>
                 <input value={form.phone || ''} onChange={handleChange('phone')} />
@@ -94,20 +110,16 @@ export default function ProfilePage() {
               <h2 className="prof-section__title">Business Information</h2>
               <div className="prof-grid">
                 <div className="prof-field">
-                  <label>Company Name</label>
-                  <input value={form.companyName || ''} onChange={handleChange('companyName')} />
+                  <label>Business Name</label>
+                  <input value={form.businessName || ''} onChange={handleChange('businessName')} />
                 </div>
                 <div className="prof-field">
-                  <label>Business Type</label>
-                  <input value={form.businessType || ''} onChange={handleChange('businessType')} />
+                  <label>Company</label>
+                  <input value={form.company || ''} onChange={handleChange('company')} />
                 </div>
                 <div className="prof-field">
-                  <label>Tax ID / EIN</label>
-                  <input value={form.taxId || ''} onChange={handleChange('taxId')} />
-                </div>
-                <div className="prof-field">
-                  <label>Website</label>
-                  <input type="url" value={form.website || ''} onChange={handleChange('website')} />
+                  <label>EIN</label>
+                  <input value={form.ein || ''} onChange={handleChange('ein')} />
                 </div>
               </div>
             </section>
@@ -142,19 +154,11 @@ export default function ProfilePage() {
             <div className="prof-grid">
               <div className="prof-field">
                 <label>Insurance Company</label>
-                <input value={form.insuranceCompany || ''} onChange={handleChange('insuranceCompany')} />
+                <input value={form.insuranceCompanyName || ''} onChange={handleChange('insuranceCompanyName')} />
               </div>
               <div className="prof-field">
                 <label>Policy Number</label>
                 <input value={form.insurancePolicyNumber || ''} onChange={handleChange('insurancePolicyNumber')} />
-              </div>
-              <div className="prof-field">
-                <label>Adjuster Name</label>
-                <input value={form.adjusterName || ''} onChange={handleChange('adjusterName')} />
-              </div>
-              <div className="prof-field">
-                <label>Adjuster Email</label>
-                <input type="email" value={form.adjusterEmail || ''} onChange={handleChange('adjusterEmail')} />
               </div>
             </div>
           </section>

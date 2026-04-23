@@ -192,14 +192,123 @@ CREATE TABLE IF NOT EXISTS documents (
     FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-CREATE INDEX IF NOT EXISTS idx_clients_pilot_id ON clients(pilot_id);
-CREATE INDEX IF NOT EXISTS idx_clients_email ON clients(email);
-CREATE INDEX IF NOT EXISTS idx_drone_profiles_pilot_id ON drone_profiles(pilot_id);
-CREATE INDEX IF NOT EXISTS idx_jobs_pilot_id ON jobs(pilot_id);
-CREATE INDEX IF NOT EXISTS idx_jobs_client_id ON jobs(client_id);
-CREATE INDEX IF NOT EXISTS idx_missions_job_id ON missions(job_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_pilot_id ON invoices(pilot_id);
-CREATE INDEX IF NOT EXISTS idx_invoices_client_id ON invoices(client_id);
-CREATE INDEX IF NOT EXISTS idx_payments_invoice_id ON payments(invoice_id);
-CREATE INDEX IF NOT EXISTS idx_documents_job_id ON documents(job_id);
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'users' AND index_name = 'idx_users_email'),
+        'SELECT 1',
+        'CREATE INDEX idx_users_email ON users(email)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'clients' AND index_name = 'idx_clients_pilot_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_clients_pilot_id ON clients(pilot_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'clients' AND index_name = 'idx_clients_email'),
+        'SELECT 1',
+        'CREATE INDEX idx_clients_email ON clients(email)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'drone_profiles' AND index_name = 'idx_drone_profiles_pilot_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_drone_profiles_pilot_id ON drone_profiles(pilot_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'jobs' AND index_name = 'idx_jobs_pilot_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_jobs_pilot_id ON jobs(pilot_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'jobs' AND index_name = 'idx_jobs_client_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_jobs_client_id ON jobs(client_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'missions' AND index_name = 'idx_missions_job_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_missions_job_id ON missions(job_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'invoices' AND index_name = 'idx_invoices_pilot_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_invoices_pilot_id ON invoices(pilot_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'invoices' AND index_name = 'idx_invoices_client_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_invoices_client_id ON invoices(client_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'payments' AND index_name = 'idx_payments_invoice_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_payments_invoice_id ON payments(invoice_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @stmt = (
+    SELECT IF(
+        EXISTS(SELECT 1 FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'documents' AND index_name = 'idx_documents_job_id'),
+        'SELECT 1',
+        'CREATE INDEX idx_documents_job_id ON documents(job_id)'
+    )
+);
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

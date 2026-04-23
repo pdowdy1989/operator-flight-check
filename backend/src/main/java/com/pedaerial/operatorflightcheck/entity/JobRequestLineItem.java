@@ -24,8 +24,8 @@ public class JobRequestLineItem {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "service_catalog_id", nullable = false)
-    private ServiceCatalog service;
+    @JoinColumn(name = "pilot_service_id", nullable = false)
+    private PilotService pilotService;
 
     @NotBlank
     @Size(max = 100)
@@ -35,6 +35,12 @@ public class JobRequestLineItem {
     @NotNull
     @Column(name = "unit_price_snapshot", nullable = false, precision = 10, scale = 2)
     private BigDecimal unitPriceSnapshot;
+
+    @NotBlank
+    @Size(max = 10)
+    @Builder.Default
+    @Column(name = "pricing_type_snapshot", nullable = false, length = 10)
+    private String pricingTypeSnapshot = "FLAT";
 
     @NotNull
     @Builder.Default
