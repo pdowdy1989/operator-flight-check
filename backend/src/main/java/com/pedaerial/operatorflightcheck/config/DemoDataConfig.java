@@ -33,6 +33,8 @@ public class DemoDataConfig {
         InvoiceRepository invoiceRepository,
         PaymentRepository paymentRepository,
         DocumentRepository documentRepository,
+        ServiceCatalogRepository serviceCatalogRepository,
+        PilotServiceRepository pilotServiceRepository,
         PasswordEncoder passwordEncoder
     ) {
         return args -> {
@@ -56,6 +58,9 @@ public class DemoDataConfig {
                 "company@pedaerial.com", "Password123", Role.COMPANY,
                 "David", "Carter", "Apex Claims & Adjusting", null
             );
+
+            List<ServiceCatalog> catalogEntries = seedServiceCatalog(serviceCatalogRepository);
+            seedPilotServices(pilotServiceRepository, pilot, catalogEntries);
 
             if (!invoiceRepository.findByPilotIdOrderByCreatedAtDesc(pilot.getId()).isEmpty()) {
                 return;
@@ -333,6 +338,107 @@ public class DemoDataConfig {
         user.setCompany(company);
         user.setLicenseNumber(licenseNumber);
         return userRepository.save(user);
+    }
+
+    private List<ServiceCatalog> seedServiceCatalog(ServiceCatalogRepository serviceCatalogRepository) {
+        if (serviceCatalogRepository.count() == 0) {
+            serviceCatalogRepository.saveAll(List.of(
+                serviceCatalog(
+                    "Insurance Roof Inspection",
+                    "Aerial roof inspection for insurance claims and assessments.",
+                    ServiceCategory.INSPECTION,
+                    JobType.INSURANCE_INSPECTION,
+                    BigDecimal.valueOf(275),
+                    60,
+                    10
+                ),
+                serviceCatalog(
+                    "Aerial Photography Package",
+                    "High-resolution aerial still photography package.",
+                    ServiceCategory.AERIAL_MEDIA,
+                    JobType.AERIAL_PHOTOGRAPHY,
+                    BigDecimal.valueOf(400),
+                    90,
+                    60
+                ),
+                serviceCatalog(
+                    "Orthomosaic Mapping",
+                    "High-accuracy 2D orthomosaic map generation from aerial data.",
+                    ServiceCategory.MAPPING_SURVEY,
+                    JobType.SURVEYING_ORTHOMOSAIC,
+                    BigDecimal.valueOf(800),
+                    180,
+                    100
+                ),
+                serviceCatalog(
+                    "Real Estate Listing Photos",
+                    "Aerial photography for MLS and property listing use.",
+                    ServiceCategory.REAL_ESTATE,
+                    JobType.REAL_ESTATE,
+                    BigDecimal.valueOf(350),
+                    60,
+                    130
+                ),
+                serviceCatalog(
+                    "Construction Progress Monitoring",
+                    "Aerial progress documentation for active construction projects.",
+                    ServiceCategory.CONSTRUCTION,
+                    JobType.CONSTRUCTION,
+                    BigDecimal.valueOf(400),
+                    90,
+                    160
+                )
+            ));
+        }
+        return serviceCatalogRepository.findByActiveTrueOrderBySortOrderAsc();
+    }
+
+    private ServiceCatalog serviceCatalog(
+        String name,
+        String description,
+        ServiceCategory category,
+        JobType jobType,
+        BigDecimal basePrice,
+        Integer estimatedDurationMinutes,
+        Integer sortOrder
+    ) {
+        return ServiceCatalog.builder()
+            .name(name)
+            .description(description)
+            .category(category)
+            .jobType(jobType)
+            .basePrice(basePrice)
+            .estimatedDurationMinutes(estimatedDurationMinutes)
+            .sortOrder(sortOrder)
+            .active(true)
+            .build();
+    }
+
+    private void seedPilotServices(
+        PilotServiceRepository pilotServiceRepository,
+        User pilot,
+        List<ServiceCatalog> catalogEntries
+    ) {
+        if (pilotServiceRepository.count() > 0) {
+            return;
+        }
+
+        List<PilotService> pilotServices = new ArrayList<>();
+        for (ServiceCatalog catalog : catalogEntries) {
+            pilotServices.add(
+                PilotService.builder()
+                    .pilot(pilot)
+                    .catalogService(catalog)
+                    .jobType(catalog.getJobType())
+                    .pricingType(PricingType.FLAT)
+                    .flatFee(catalog.getBasePrice())
+                    .estimatedDurationMinutes(catalog.getEstimatedDurationMinutes())
+                    .active(true)
+                    .sortOrder(catalog.getSortOrder())
+                    .build()
+            );
+        }
+        pilotServiceRepository.saveAll(pilotServices);
     }
 
     private Invoice buildInvoice(

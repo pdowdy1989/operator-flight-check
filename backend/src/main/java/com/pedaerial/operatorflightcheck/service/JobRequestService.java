@@ -1,6 +1,7 @@
 package com.pedaerial.operatorflightcheck.service;
 
 import com.pedaerial.operatorflightcheck.dto.JobRequestDecisionRequest;
+import com.pedaerial.operatorflightcheck.dto.JobRequestLineItemSubmitRequest;
 import com.pedaerial.operatorflightcheck.dto.JobRequestResponse;
 import com.pedaerial.operatorflightcheck.dto.JobRequestSubmitRequest;
 import com.pedaerial.operatorflightcheck.entity.*;
@@ -51,8 +52,7 @@ public class JobRequestService {
 
         List<PilotService> loadedServices = new ArrayList<>();
         for (var li : req.getLineItems()) {
-            PilotService ps = pilotServiceRepository.findById(li.getPilotServiceId())
-                .orElseThrow(() -> new BadRequestException("Service not found: " + li.getPilotServiceId()));
+            PilotService ps = resolvePilotService(li);
             if (!ps.getActive()) {
                 throw new BadRequestException("Service is not active: " + ps.getDisplayName());
             }
@@ -138,6 +138,24 @@ public class JobRequestService {
         }
 
         return responseMapper.toJobRequestResponse(jobRequestRepository.save(savedRequest));
+    }
+
+    private PilotService resolvePilotService(JobRequestLineItemSubmitRequest lineItem) {
+        if (lineItem.getPilotServiceId() != null) {
+            return pilotServiceRepository.findById(lineItem.getPilotServiceId())
+                .orElseThrow(() -> new BadRequestException("Service not found: " + lineItem.getPilotServiceId()));
+        }
+
+        if (lineItem.getServiceCatalogId() != null) {
+            UUID catalogId = lineItem.getServiceCatalogId();
+            return pilotServiceRepository.findAll().stream()
+                .filter(service -> service.getCatalogService() != null)
+                .filter(service -> catalogId.equals(service.getCatalogService().getId()))
+                .findFirst()
+                .orElseThrow(() -> new BadRequestException("Service not found: " + catalogId));
+        }
+
+        throw new BadRequestException("A service selection is required.");
     }
 
     public JobRequestResponse decide(UUID id, JobRequestDecisionRequest decision, String pilotId) {

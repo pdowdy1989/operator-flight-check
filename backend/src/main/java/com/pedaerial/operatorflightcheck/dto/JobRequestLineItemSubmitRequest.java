@@ -15,8 +15,9 @@ import java.util.UUID;
 @AllArgsConstructor
 public class JobRequestLineItemSubmitRequest {
 
-    @NotNull
     private UUID pilotServiceId;
+
+    private UUID serviceCatalogId;
 
     @NotNull
     @Min(1)
