@@ -10,6 +10,7 @@ import { useAuth } from "./context/AuthContext";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import DashboardRouter from "./pages/DashboardRouter";
 
 // Pages — protected (pilot)
 import PilotDashboardPage from "./pages/PilotDashboardPage";
@@ -19,7 +20,6 @@ import DocumentsPage from "./pages/DocumentsPage";
 import ClientsPage from "./pages/ClientsPage";
 import DronesPage from "./pages/DronesPage";
 import InvoicesPage from "./pages/InvoicesPage";
-import WeatherPage from "./pages/WeatherPage";
 
 // Pages — protected (client / company)
 import RequestWorkPage from "./pages/RequestWorkPage";
@@ -30,7 +30,7 @@ import ProfilePage from "./pages/ProfilePage";
 import PaymentResultPage from "./pages/PaymentResultPage";
 
 const PROTECTED_ROUTES = [
-  "/jobs", "/documents", "/clients", "/drones", "/invoices", "/weather",
+  "/dashboard", "/jobs", "/documents", "/clients", "/drones", "/invoices",
   "/request-work", "/my-requests", "/archive", "/profile", "/payment",
 ];
 
@@ -86,6 +86,7 @@ export default function App() {
 
         {/* Protected */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashboardRouter />} />
           <Route path="/jobs" element={<PilotDashboardPage />} />
           <Route path="/jobs/new" element={<NewJobPage />} />
           <Route path="/jobs/:id" element={<JobDetailPage />} />
@@ -93,7 +94,6 @@ export default function App() {
           <Route path="/clients" element={<ClientsPage />} />
           <Route path="/drones" element={<DronesPage />} />
           <Route path="/invoices" element={<InvoicesPage />} />
-          <Route path="/weather" element={<WeatherPage />} />
 
           {/* Client / Company routes */}
           <Route

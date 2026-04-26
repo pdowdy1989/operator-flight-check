@@ -9,7 +9,6 @@ const PILOT_TABS = [
   { to: "/clients", label: "Clients", shortLabel: "Clients", icon: "users" },
   { to: "/drones", label: "Drones", shortLabel: "Drones", icon: "plane" },
   { to: "/invoices", label: "Invoices", shortLabel: "Invoices", icon: "receipt" },
-  { to: "/weather", label: "Weather", shortLabel: "Weather", icon: "cloud" },
 ];
 const COMPANY_TABS = [
   { to: "/dashboard", label: "Dashboard", shortLabel: "Dash", icon: "grid" },
@@ -32,7 +31,6 @@ const ADMIN_TABS = [
   { to: "/clients", label: "Clients", shortLabel: "Clients", icon: "users" },
   { to: "/drones", label: "Drones", shortLabel: "Drones", icon: "plane" },
   { to: "/invoices", label: "Invoices", shortLabel: "Invoices", icon: "receipt" },
-  { to: "/weather", label: "Weather", shortLabel: "Weather", icon: "cloud" },
 ];
 
 export function getPrimaryTabsForRole(role) {
