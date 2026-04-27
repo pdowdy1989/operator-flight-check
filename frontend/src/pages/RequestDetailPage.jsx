@@ -12,10 +12,25 @@ import './RequestDetailPage.css';
 const TABS = ['Overview', 'Invoice', 'Agreement', 'Deliverables'];
 
 const TIMELINE_STEPS = ['REQUESTED', 'ACCEPTED', 'SCHEDULED', 'IN_PROGRESS', 'DELIVERED'];
+const API_BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8081/api').replace(/\/+$/, '');
+const FILE_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getFileUrl(filePath) {
+  if (!filePath) return '';
+  if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
+  const normalizedPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
+  return `${FILE_BASE_URL}${normalizedPath}`;
+}
+
+function getDeliverableUrl(doc) {
+  if (doc?.downloadUrl) return getFileUrl(doc.downloadUrl);
+  if (doc?.filePath) return getFileUrl(doc.filePath);
+  return `${API_BASE_URL}/documents/${doc.id}/download`;
 }
 
 function openBlob(blob, filename) {
@@ -362,7 +377,7 @@ export default function RequestDetailPage() {
                   {deliverables.map(doc => (
                     <a
                       key={doc.id}
-                      href={`/api/documents/${doc.id}/download`}
+                      href={getDeliverableUrl(doc)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="rd-doc-card"
