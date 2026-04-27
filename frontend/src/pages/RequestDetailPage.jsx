@@ -7,30 +7,16 @@ import { getInvoiceByJob, downloadInvoicePdf } from '../services/invoicesService
 import agreementsService from '../services/agreementsService';
 import paymentsService from '../services/paymentsService';
 import { getJobDeliverables } from '../services/documentsService';
+import apiClient from '../services/apiClient';
 import './RequestDetailPage.css';
 
 const TABS = ['Overview', 'Invoice', 'Agreement', 'Deliverables'];
 
 const TIMELINE_STEPS = ['REQUESTED', 'ACCEPTED', 'SCHEDULED', 'IN_PROGRESS', 'DELIVERED'];
-const API_BASE_URL = (import.meta.env.VITE_API_URL ?? 'http://localhost:8081/api').replace(/\/+$/, '');
-const FILE_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, '');
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function getFileUrl(filePath) {
-  if (!filePath) return '';
-  if (filePath.startsWith('http://') || filePath.startsWith('https://')) return filePath;
-  const normalizedPath = filePath.startsWith('/') ? filePath : `/${filePath}`;
-  return `${FILE_BASE_URL}${normalizedPath}`;
-}
-
-function getDeliverableUrl(doc) {
-  if (doc?.downloadUrl) return getFileUrl(doc.downloadUrl);
-  if (doc?.filePath) return getFileUrl(doc.filePath);
-  return `${API_BASE_URL}/documents/${doc.id}/download`;
 }
 
 function openBlob(blob, filename) {
@@ -143,6 +129,23 @@ export default function RequestDetailPage() {
       openBlob(blob, `agreement-${agreement.agreementNumber || agreement.id}.pdf`);
     } catch {
       setActionError('Failed to download agreement PDF.');
+    }
+  };
+
+  const handleOpenDeliverable = async (documentId) => {
+    try {
+      const response = await apiClient.get(`/documents/${documentId}/download`, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([response.data], {
+        type: response.headers['content-type'] || 'application/octet-stream',
+      });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60 * 1000);
+    } catch (err) {
+      console.error('Failed to open deliverable:', err);
+      alert('Could not open the file. You may not have access, or the file is missing.');
     }
   };
 
@@ -375,16 +378,15 @@ export default function RequestDetailPage() {
               ) : (
                 <div className="rd-deliverables-grid">
                   {deliverables.map(doc => (
-                    <a
+                    <button
                       key={doc.id}
-                      href={getDeliverableUrl(doc)}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      type="button"
+                      onClick={() => handleOpenDeliverable(doc.id)}
                       className="rd-doc-card"
                     >
                       <div className="rd-doc-card__name">{doc.fileName || doc.name}</div>
                       <div className="rd-doc-card__type">{doc.fileType || doc.contentType || 'File'}</div>
-                    </a>
+                    </button>
                   ))}
                 </div>
               )}
