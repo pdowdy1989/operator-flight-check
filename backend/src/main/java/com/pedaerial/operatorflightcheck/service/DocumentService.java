@@ -82,7 +82,7 @@ public class DocumentService {
             .orElseThrow(() -> new ResourceNotFoundException("User not found: " + uploaderId));
 
         String safeFileName = UUID.randomUUID() + "_" + sanitizeFileName(file.getOriginalFilename());
-        Path jobDir = Paths.get(uploadDir, request.jobId().toString());
+        Path jobDir = Paths.get(uploadDir, request.jobId().toString()).toAbsolutePath().normalize();
         Files.createDirectories(jobDir);
         Path filePath = jobDir.resolve(safeFileName);
         file.transferTo(filePath.toFile());

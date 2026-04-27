@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { JobCard } from "../components/features/JobCard";
 import { StatCard } from "../components/ui/StatCard";
 import JobsMap from "../components/features/JobsMap";
@@ -18,10 +18,16 @@ function formatTotal(value) {
 
 export default function PilotDashboardPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [stats, setStats] = useState(null);
   const [jobs, setJobs] = useState([]);
   const [pendingRequests, setPendingRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isJobsRoute = location.pathname.startsWith("/jobs");
+  const isDashboardRoute = location.pathname === "/dashboard";
+  const subtitle = isJobsRoute
+    ? "Manage every active job in one place."
+    : "Track active jobs, upcoming launches, and revenue signals from one glassy mission board.";
 
   function refreshJobs() {
     return getJobs().then((jobsRes) => setJobs(jobsRes.data));
@@ -69,7 +75,7 @@ export default function PilotDashboardPage() {
   return (
     <PageShell
       title="Flight Control"
-      subtitle="Track active jobs, upcoming launches, and revenue signals from one glassy mission board."
+      subtitle={subtitle}
       loading={loading}
     >
       {pendingRequests.length > 0 && (
@@ -100,41 +106,49 @@ export default function PilotDashboardPage() {
         </div>
       )}
 
-      <div className="pilot-dash__stats">
-        <StatCard icon="Total" value={stats?.totalMissionCount ?? jobs.length} label="Total Missions" accent />
-        <StatCard
-          icon="Done"
-          value={stats?.completedMissionCount ?? jobs.filter((job) => ["COMPLETED", "DELIVERED"].includes(job.status)).length}
-          label="Completed"
-        />
-        <StatCard icon="Soon" value={stats?.upcomingFlightCount ?? "-"} label="Upcoming Flights" />
-        <StatCard icon="Cash" value={stats?.revenueTotal != null ? `$${Number(stats.revenueTotal).toFixed(0)}` : "-"} label="Revenue" />
-      </div>
-
-      <div className="pilot-dash__hero">
-        <JobsMap jobs={jobs} />
-      </div>
-
-      <div className="pilot-dash__header">
-        <h2 className="pilot-dash__section-title">Jobs</h2>
-        <button className="pilot-dash__new-btn" onClick={() => navigate("/jobs/new")}>
-          + New Job
-        </button>
-      </div>
-
-      {jobs.length === 0 ? (
-        <div className="pilot-dash__empty glass-card">
-          <p>No jobs yet. Create your first job to get started.</p>
-          <button className="pilot-dash__new-btn" onClick={() => navigate("/jobs/new")}>
-            + Create Job
-          </button>
+      {!isJobsRoute && (
+        <div className="pilot-dash__stats">
+          <StatCard icon="Total" value={stats?.totalMissionCount ?? jobs.length} label="Total Missions" accent />
+          <StatCard
+            icon="Done"
+            value={stats?.completedMissionCount ?? jobs.filter((job) => ["COMPLETED", "DELIVERED"].includes(job.status)).length}
+            label="Completed"
+          />
+          <StatCard icon="Soon" value={stats?.upcomingFlightCount ?? "-"} label="Upcoming Flights" />
+          <StatCard icon="Cash" value={stats?.revenueTotal != null ? `$${Number(stats.revenueTotal).toFixed(0)}` : "-"} label="Revenue" />
         </div>
-      ) : (
-        <div className="pilot-dash__job-grid">
-          {jobs.map((job) => (
-            <JobCard key={job.id} job={job} />
-          ))}
+      )}
+
+      {!isJobsRoute && (
+        <div className="pilot-dash__hero">
+          <JobsMap jobs={jobs} />
         </div>
+      )}
+
+      {!isDashboardRoute && (
+        <>
+          <div className="pilot-dash__header">
+            <h2 className="pilot-dash__section-title">Jobs</h2>
+            <button className="pilot-dash__new-btn" onClick={() => navigate("/jobs/new")}>
+              + New Job
+            </button>
+          </div>
+
+          {jobs.length === 0 ? (
+            <div className="pilot-dash__empty glass-card">
+              <p>No jobs yet. Create your first job to get started.</p>
+              <button className="pilot-dash__new-btn" onClick={() => navigate("/jobs/new")}>
+                + Create Job
+              </button>
+            </div>
+          ) : (
+            <div className="pilot-dash__job-grid">
+              {jobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </PageShell>
   );

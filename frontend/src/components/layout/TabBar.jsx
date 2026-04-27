@@ -1,4 +1,4 @@
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useSidebarLayout } from "./SidebarLayoutContext";
 import { useAuth } from "../../context/AuthContext";
 
@@ -153,6 +153,16 @@ function Icon({ name }) {
     );
   }
 
+  if (name === "logout") {
+    return (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4" />
+        <path d="M16 17l5-5-5-5" />
+        <path d="M21 12H9" />
+      </svg>
+    );
+  }
+
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -196,10 +206,20 @@ function DesktopNavLink({ item, pathname, isCollapsed }) {
 
 export default function TabBar({ overlayMode = false }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const { isCollapsed, setIsCollapsed, setIsSidebarOpen } = useSidebarLayout();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const primaryTabs = getPrimaryTabsForRole(user?.role);
   const homePath = "/dashboard";
+  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ");
+  const displayName = fullName || user?.email;
+  const showUserPanel = Boolean(user && displayName && (!isCollapsed || overlayMode));
+
+  function handleLogout() {
+    logout();
+    setIsSidebarOpen(false);
+    navigate("/login", { replace: true });
+  }
 
   return (
     <>
@@ -229,6 +249,15 @@ export default function TabBar({ overlayMode = false }) {
                 </NavLink>
               );
             })}
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex min-w-[88px] flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 text-center transition-colors hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)]"
+              style={{ color: "var(--text-secondary)" }}
+            >
+              <Icon name="logout" />
+              <span className="text-[10px] font-semibold leading-none">Log Out</span>
+            </button>
           </div>
         </nav>
       ) : null}
@@ -319,6 +348,25 @@ export default function TabBar({ overlayMode = false }) {
           </div>
         </div>
 
+        {showUserPanel ? (
+          <div className="px-4 py-3" style={{ borderBottom: "1px solid var(--border-default)" }}>
+            <div
+              className="rounded-2xl px-3 py-2.5"
+              style={{
+                background: "var(--bg-surface)",
+                border: "1px solid var(--border-default)",
+              }}
+            >
+              <div className="truncate text-sm font-bold" style={{ color: "var(--text-primary)" }}>
+                {displayName}
+              </div>
+              <div className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: "var(--text-muted)" }}>
+                {user.role}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <div className="flex-1 overflow-y-auto px-2 py-3">
           <div className="mb-5">
             <p
@@ -340,6 +388,27 @@ export default function TabBar({ overlayMode = false }) {
               ))}
             </div>
           </div>
+        </div>
+
+        <div className="px-3 py-4" style={{ borderTop: "1px solid var(--border-default)" }}>
+          <button
+            type="button"
+            onClick={handleLogout}
+            title={isCollapsed && !overlayMode ? "Log Out" : undefined}
+            className={`flex min-h-[44px] w-full items-center rounded-xl px-3 py-2.5 font-semibold transition-colors hover:bg-[var(--bg-surface-hover)] hover:text-[var(--text-primary)] ${
+              isCollapsed && !overlayMode ? "justify-center" : "gap-3"
+            }`}
+            style={{
+              border: "1px solid var(--border-default)",
+              background: "var(--bg-surface)",
+              color: "var(--text-secondary)",
+            }}
+          >
+            <span className="flex-shrink-0">
+              <Icon name="logout" />
+            </span>
+            {isCollapsed && !overlayMode ? null : <span className="hidden text-sm lg:inline">Log Out</span>}
+          </button>
         </div>
       </nav>
     </>
